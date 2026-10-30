@@ -69,6 +69,15 @@ test("the source chip opens the Hughes 2013 citation with its doi", async ({ pag
   await expect(page.getByText("0.24").first()).toBeVisible();
 
   const chip = page.getByRole("button", { name: new RegExp(copy.measured.source) }).first();
+  // The ~470px popover fits neither above nor below a chip centred in a 720px viewport, which is where
+  // Playwright's own scroll puts it; that made this test pass only when the click raced the smooth
+  // scroll (7 of 8 runs failed at HEAD too). Let fonts and the entrance settle, then bring the chip near
+  // the top first, as a reader would.
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
+  await chip.evaluate((el) => {
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 120, behavior: "instant" });
+  });
   await chip.click();
   const doi = page.getByRole("link", { name: new RegExp(CITATION.doi.replace(/[.()]/g, "\\$&")) });
   await expect(doi).toBeVisible();
