@@ -8,3 +8,9 @@ CLAUDE.md
 .omc/
 .claude/
 design/refs/
+.claude/settings.local.json
+.next/
+test-results/
+playwright-report/
+*.tsbuildinfo
+public/demo/
