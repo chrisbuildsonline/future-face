@@ -99,9 +99,23 @@ function Compare({ h, label }: { h: Horizon; label: string }) {
         </span>
       </div>
       <figcaption className={s.caption}>
+        <span className={s.ages}>
+          <span className={s.ageNow}>
+            <span className={s.ageArm}>{c.slider.left}</span>
+            <b data-testid="frame-now">
+              {c.frame.age} {h.resAge}
+            </b>
+          </span>
+          <span className={s.ageSpf}>
+            <span className={s.ageArm}>{c.slider.right}</span>
+            <b data-testid="frame-spf">
+              {c.frame.age} {h.spfResAge}
+            </b>
+          </span>
+        </span>
         <strong>{c.disclaimer}</strong>
         <span>
-          {c.frame.picked} {h.resAge} {c.frame.forTarget} {h.targetAge}. {c.frame.nearest}
+          {c.frame.target} {h.targetAge}. {c.frame.nearest} {c.frame.method}
         </span>
       </figcaption>
     </figure>
@@ -146,6 +160,11 @@ function Measured({ h, settings, citation }: { h: Horizon; settings: FutureResul
         <span className={s.keyNow}>{c.slider.left}</span>
         <span className={s.keySpf}>{c.slider.right}</span>
       </p>
+      {h.sameFrame || rows.length === 0 ? (
+        <p className={s.sameFrame} data-testid="same-frame">
+          {c.measured.sameFrame}
+        </p>
+      ) : (
       <ul className={s.rows}>
         {rows.map((m) => {
           const label = c.measured.labels[m.key] ?? m.key;
@@ -193,6 +212,7 @@ function Measured({ h, settings, citation }: { h: Horizon; settings: FutureResul
           );
         })}
       </ul>
+      )}
       <p className={s.foot}>{c.measured.foot}</p>
     </article>
   );
@@ -347,7 +367,7 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
             ) : null}
           </div>
           <Title id={`${uid}-t`} className={s.title}>
-            {c.titlePrefix} {h.targetAge}. <em>{c.titleAccent}</em>
+            {c.titlePrefix} {h.years} {c.titleYears} <em>{c.titleAccent}</em>
           </Title>
           <p className={s.lead}>{c.lead}</p>
           {product ? (

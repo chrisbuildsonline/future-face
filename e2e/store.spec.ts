@@ -33,7 +33,7 @@ const settle = async (f: Page | Frame) => {
   await f.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
 };
 
-const pillOf = (page: Page, p: Product = product) => page.getByRole("button", { name: `See your face in 20 years with SPF ${p.spf}` });
+const pillOf = (page: Page, p: Product = product) => page.getByRole("button", { name: `See your face in 30 years with SPF ${p.spf}` });
 
 async function openModal(page: Page, p: Product = product) {
   await pillOf(page, p).click();

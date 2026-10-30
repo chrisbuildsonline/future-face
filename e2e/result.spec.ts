@@ -101,6 +101,30 @@ test("the source chip opens the Hughes 2013 citation with its doi", async ({ pag
   expect(errors).toEqual([]);
 });
 
+test("the two default faces are different images with different frame ages", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/result");
+  const now = page.getByTestId("face-now");
+  const spf = page.getByTestId("face-spf");
+  await expectLoaded(now);
+  await expectLoaded(spf);
+
+  // +30 is the default horizon
+  await expect(page.getByRole("button", { name: landing.visual.horizon[1] })).toHaveAttribute("aria-pressed", "true");
+  const [nowSrc, spfSrc] = [await now.getAttribute("src"), await spf.getAttribute("src")];
+  expect(nowSrc).toBeTruthy();
+  expect(spfSrc).toBeTruthy();
+  expect(nowSrc).not.toBe(spfSrc);
+
+  // each face is captioned with its own aging frame: now 66, SPF 58 on the demo face
+  const nowAge = page.getByTestId("frame-now");
+  const spfAge = page.getByTestId("frame-spf");
+  await expect(nowAge).toHaveText(`${copy.frame.age} 66`);
+  await expect(spfAge).toHaveText(`${copy.frame.age} 58`);
+  expect(await nowAge.textContent()).not.toBe(await spfAge.textContent());
+  expect(errors).toEqual([]);
+});
+
 test("the horizon switch swaps both faces and the measured numbers", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/result");
@@ -108,21 +132,25 @@ test("the horizon switch swaps both faces and the measured numbers", async ({ pa
   const spf = page.getByTestId("face-spf");
   await expectLoaded(now);
 
-  // +20 is the default: wrinkles 71.2 -> 79.1, frame 58 for target 58
-  await expect(now).toHaveAttribute("src", /now-20\.jpg/);
-  await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("71.2");
-  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("79.1");
-  await expect(page.getByText(/picked res_age 58 for target 58/)).toBeVisible();
+  // +30 is the default: wrinkles 21.6 -> 61.0, frames 66 (now) and 58 (SPF) for target 64
+  await expect(now).toHaveAttribute("src", /now-30\.jpg/);
+  await expect(spf).toHaveAttribute("src", /spf-30\.jpg/);
+  await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("21.6");
+  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("61.0");
+  await expect(page.getByText(`${copy.frame.target} 64.`)).toBeVisible();
 
-  const ten = page.getByRole("button", { name: landing.visual.horizon[0] });
-  await ten.click();
-  await expect(ten).toHaveAttribute("aria-pressed", "true");
-  await expect(now).toHaveAttribute("src", /now-10\.jpg/);
-  await expect(spf).toHaveAttribute("src", /spf-10\.jpg/);
-  await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("75.7");
-  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("82.0");
-  await expect(page.getByText(/picked res_age 47 for target 48/)).toBeVisible();
+  const twenty = page.getByRole("button", { name: landing.visual.horizon[0] });
+  await twenty.click();
+  await expect(twenty).toHaveAttribute("aria-pressed", "true");
+  await expect(now).toHaveAttribute("src", /now-20\.jpg/);
+  await expect(spf).toHaveAttribute("src", /spf-20\.jpg/);
+  await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("44.9");
+  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("78.6");
+  await expect(page.getByTestId("frame-now")).toHaveText(`${copy.frame.age} 55`);
+  await expect(page.getByTestId("frame-spf")).toHaveText(`${copy.frame.age} 51`);
+  await expect(page.getByText(`${copy.frame.target} 54.`)).toBeVisible();
   await expectLoaded(now);
+  await expectLoaded(spf);
 
   expect(errors).toEqual([]);
 });
@@ -202,6 +230,34 @@ test.describe("upload on the landing", () => {
     await expectLoaded(page.getByTestId("face-now"));
     await expectLoaded(page.getByTestId("face-spf"));
     await expect(page.getByText(upload.loadingTitle)).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+
+  test("when both arms share one aging frame, the measured card says so and shows no deltas", async ({ page, request }) => {
+    const errors = collectErrors(page);
+    const demo = await (await request.get("/api/future")).json();
+    const last = demo.horizons[demo.horizons.length - 1];
+    const same = { ...last, spfResAge: last.resAge, sameFrame: true, measured: [] };
+    await page.route("**/api/future", (route) =>
+      route.request().method() === "POST"
+        ? route.fulfill({ json: { ...demo, horizons: [...demo.horizons.slice(0, -1), same] } })
+        : route.continue(),
+    );
+    await page.goto("/");
+    await page.getByLabel(upload.city).fill("Lisbon");
+    await page.getByLabel(upload.file).setInputFiles(selfie);
+    await page.getByRole("button", { name: upload.submit }).click();
+
+    await expectLoaded(page.getByTestId("face-now"));
+    await expect(page.getByTestId("same-frame")).toHaveText(copy.measured.sameFrame);
+    await expect(page.getByTestId("measured-wrinkle-now")).toHaveCount(0);
+    await expect(page.getByTestId("frame-now")).toHaveText(`${copy.frame.age} ${last.resAge}`);
+    await expect(page.getByTestId("frame-spf")).toHaveText(`${copy.frame.age} ${last.resAge}`);
+
+    // the other horizon still has two frames and its measured line
+    await page.getByRole("button", { name: landing.visual.horizon[0] }).click();
+    await expect(page.getByTestId("same-frame")).toHaveCount(0);
+    await expect(page.getByTestId("measured-wrinkle-now")).toBeVisible();
     expect(errors).toEqual([]);
   });
 });

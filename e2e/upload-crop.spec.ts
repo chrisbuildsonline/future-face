@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import sharp from "sharp";
 import { upload } from "../lib/copy";
 
 // F8: the browser finds the face with MediaPipe and crops the photo to it before upload.
@@ -8,7 +9,14 @@ import { upload } from "../lib/copy";
 mkdirSync("docs/screenshots", { recursive: true });
 
 const wide = "e2e/fixtures/wide-selfie.jpg"; // 2400x1600, face ~35% of the width, left of centre
-const filled = "fixtures/demo/input.jpg"; // 1024x1024, the face already fills the frame
+// The demo face (fixtures/demo/input.jpg, 1024x1024) has head room around it, so the crop would fire on it.
+// A 640px square around that face is a photo where the face already fills the frame.
+const FILLED = 640;
+const filled = async () => ({
+  name: "filled-selfie.jpg",
+  mimeType: "image/jpeg",
+  buffer: await sharp("fixtures/demo/input.jpg").extract({ left: 192, top: 250, width: FILLED, height: FILLED }).jpeg().toBuffer(),
+});
 
 function collectErrors(page: Page) {
   const errors: string[] = [];
@@ -93,13 +101,13 @@ test("a photo where the face already fills the frame is uploaded as is, with no 
   const errors = collectErrors(page);
   await open(page, errors);
   await page.getByLabel(upload.city).fill("Lisbon");
-  await page.getByLabel(upload.file).setInputFiles(filled);
+  await page.getByLabel(upload.file).setInputFiles(await filled());
 
   // detection finished: the submit pill comes back
   await expect(page.getByRole("button", { name: upload.submit })).toBeEnabled({ timeout: 20_000 });
   await expect(page.getByText(upload.cropDone)).toHaveCount(0);
   await expect(page.getByRole("button", { name: upload.cropUndo })).toHaveCount(0);
-  expect(await naturalSize(page)).toEqual({ w: 1024, h: 1024 });
-  await expect(page.getByText("input.jpg", { exact: true })).toBeVisible();
+  expect(await naturalSize(page)).toEqual({ w: FILLED, h: FILLED });
+  await expect(page.getByText("filled-selfie.jpg", { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });

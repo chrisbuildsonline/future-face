@@ -80,7 +80,7 @@ box-shadow:0 2px 4px rgba(40,28,16,.05),0 30px 60px -24px rgba(40,28,16,.28);tra
     back.setAttribute("data-future-face-modal", "");
     const frame = document.createElement("iframe");
     frame.className = "ff-frame";
-    frame.title = "Future Face: your face in 20 years";
+    frame.title = "Future Face: your face in 30 years";
     frame.src = `${ORIGIN}/result?${q}`;
     frame.setAttribute("role", "dialog");
     frame.setAttribute("aria-modal", "true");
@@ -113,7 +113,7 @@ box-shadow:0 2px 4px rgba(40,28,16,.05),0 30px 60px -24px rgba(40,28,16,.28);tra
     if (host.shadowRoot) return;
     const root = host.attachShadow({ mode: "open" });
     const spf = (host.dataset.spf || "").trim();
-    const label = /^\d{1,3}$/.test(spf) ? `See your face in 20 years with SPF ${spf}` : "See your face in 20 years";
+    const label = /^\d{1,3}$/.test(spf) ? `See your face in 30 years with SPF ${spf}` : "See your face in 30 years";
     root.innerHTML = `<style>${CSS}</style><button type="button" class="pill" aria-haspopup="dialog"><span class="sun" aria-hidden="true"><i></i></span><span></span></button>`;
     const btn = root.querySelector("button");
     btn.lastElementChild.textContent = label;

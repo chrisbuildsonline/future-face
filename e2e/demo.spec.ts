@@ -39,7 +39,7 @@ test("demo script: steps 1 to 10 of docs/DEMO.md run end to end", async ({ page 
 
   // 1. Landing
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Meet yourself at 45. Twice.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Meet yourself in 30 years. Twice.");
   await expect(page.getByText("YouCam Skin AI", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "See it in a store" }).click();
 
@@ -51,7 +51,7 @@ test("demo script: steps 1 to 10 of docs/DEMO.md run end to end", async ({ page 
   await expectLoaded(page.getByRole("img", { name: label }));
   await expect(page.getByText("Price set by the store", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Add this to your store in two lines" })).toBeVisible();
-  const pill = page.getByRole("button", { name: "See your face in 20 years with SPF 50" });
+  const pill = page.getByRole("button", { name: "See your face in 30 years with SPF 50" });
   await expect(pill).toBeVisible();
 
   // 3. Open the result
@@ -70,9 +70,13 @@ test("demo script: steps 1 to 10 of docs/DEMO.md run end to end", async ({ page 
   const main = f.getByRole("region", { name: "Or see it on our demo face" });
   await main.getByText("Demo face", { exact: true }).scrollIntoViewIfNeeded();
   await expect(main.getByText("Demo face", { exact: true })).toBeVisible();
-  await expect(main.getByText("Age read today").locator("..")).toHaveText(/Age read today\s*38/);
+  await expect(main.getByText("Age read today").locator("..")).toHaveText(/Age read today\s*34/);
   await expect(main.getByText("Nambour · UV 7.8", { exact: true })).toBeVisible();
-  await expect(main.getByRole("heading", { level: 2, name: "You at 58. Twice." })).toBeVisible();
+  await expect(main.getByRole("heading", { level: 2, name: "You in 30 years. Twice." })).toBeVisible();
+  // two different aging frames: the SPF face is the frame 24% fewer years ahead
+  await expect(main.getByTestId("frame-now")).toHaveText("Frame age 66");
+  await expect(main.getByTestId("frame-spf")).toHaveText("Frame age 58");
+  expect(await now.getAttribute("src")).not.toBe(await spf.getAttribute("src"));
   const withLine = main.getByTestId("with-product");
   await expect(withLine).toContainText(`With ${label}`);
   await expect(withLine.getByText("SPF 50 covers a UV 7.8 day", { exact: true })).toBeVisible();
@@ -119,14 +123,14 @@ test("demo script: steps 1 to 10 of docs/DEMO.md run end to end", async ({ page 
   await expect(doi).toBeHidden();
   await expect(iframe).toBeVisible();
 
-  // 6. The measured line (+20 yrs is the default horizon)
+  // 6. The measured line (+30 yrs is the default horizon)
   await expect(f.getByText("Read by AI Skin Analysis", { exact: true })).toBeVisible();
   await expect(f.getByRole("heading", { name: "The measured line" })).toBeVisible();
   await expect(f.getByText("Higher = better-looking skin", { exact: true })).toBeVisible();
   for (const [key, a, b] of [
-    ["wrinkle", "71.2", "79.1"],
-    ["texture", "91.4", "97.5"],
-    ["spots", "96.4", "98.8"],
+    ["wrinkle", "21.6", "61.0"],
+    ["texture", "64.1", "79.6"],
+    ["spots", "63.4", "83.7"],
   ]) {
     await expect(f.getByTestId(`measured-${key}-now`)).toHaveText(a);
     await expect(f.getByTestId(`measured-${key}-spf`)).toHaveText(b);
@@ -134,12 +138,14 @@ test("demo script: steps 1 to 10 of docs/DEMO.md run end to end", async ({ page 
 
   // 7. Change the horizon
   const wrinkleRow = f.locator("li").filter({ has: f.getByTestId("measured-wrinkle-now") });
-  await f.getByRole("button", { name: "+10 yrs", exact: true }).click();
-  await expect(now).toHaveAttribute("src", /now-10\.jpg/);
-  await expect(wrinkleRow).toContainText("+6.4");
   await f.getByRole("button", { name: "+20 yrs", exact: true }).click();
   await expect(now).toHaveAttribute("src", /now-20\.jpg/);
-  await expect(wrinkleRow).toContainText("+7.9");
+  await expect(spf).toHaveAttribute("src", /spf-20\.jpg/);
+  await expect(wrinkleRow).toContainText("+33.6");
+  await f.getByRole("button", { name: "+30 yrs", exact: true }).click();
+  await expect(now).toHaveAttribute("src", /now-30\.jpg/);
+  await expect(spf).toHaveAttribute("src", /spf-30\.jpg/);
+  await expect(wrinkleRow).toContainText("+39.4");
 
   // 8. UV where you live
   const uv = f.locator("article").filter({ hasText: "UV today" });
