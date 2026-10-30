@@ -13,9 +13,19 @@ export function faceCropRect(
 ): { x: number; y: number; size: number } | null {
   const short = Math.min(img.width, img.height);
   if (short < minSize || face.width >= fill * img.width) return null;
-  const size = Math.min(short, Math.max(minSize, Math.round(face.width / fill)));
-  const cx = face.x + face.width / 2;
-  const cy = face.y + face.height / 2 - face.height * 0.1; // lift the centre so hair and forehead stay in
-  const clamp = (v: number, max: number) => Math.min(Math.max(0, Math.round(v)), max);
-  return { x: clamp(cx - size / 2, img.width - size), y: clamp(cy - size / 2, img.height - size), size };
+  // tall boxes (height ~1.3x width) need the height term, or forehead/chin get cut off
+  const size = Math.min(short, Math.max(minSize, Math.round(Math.max(face.width / fill, face.height * 1.25))));
+  // start position along one axis: centred on c, then pushed so the face plus a 10% margin fits when possible
+  const place = (c: number, p: number, len: number, max: number) => {
+    const lo = Math.ceil(p + len * 1.1 - size);
+    const hi = Math.floor(p - len * 0.1);
+    const v = Math.round(c - size / 2);
+    return Math.min(Math.max(0, lo <= hi ? Math.min(Math.max(v, lo), hi) : v), max);
+  };
+  const cy = face.y + face.height * 0.4; // centre lifted by 10% of face height so hair and forehead stay in
+  return {
+    x: place(face.x + face.width / 2, face.x, face.width, img.width - size),
+    y: place(cy, face.y, face.height, img.height - size),
+    size,
+  };
 }

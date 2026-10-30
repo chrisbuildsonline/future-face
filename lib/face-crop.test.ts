@@ -36,20 +36,34 @@ describe("faceCropRect", () => {
     expect(faceCropRect({ width: 4000, height: 400 }, { x: 100, y: 100, width: 100, height: 100 })).toBeNull();
   });
 
+  test("a tall face box keeps forehead and chin inside the square", () => {
+    const r = faceCropRect({ width: 1600, height: 1200 }, { x: 650, y: 300, width: 300, height: 400 })!;
+    expect(r.size).toBeGreaterThanOrEqual(500);
+    expect(r.y).toBeLessThanOrEqual(300 - 40);
+    expect(r.y + r.size).toBeGreaterThanOrEqual(700 + 40);
+  });
+
   test("random cases: integers, inside bounds, face stays inside the square when it fits", () => {
     let seed = 12345;
     const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
     for (let i = 0; i < 500; i++) {
       const img = { width: 500 + Math.floor(rnd() * 4000), height: 500 + Math.floor(rnd() * 4000) };
       const fw = 20 + Math.floor(rnd() * Math.min(img.width, img.height) * 0.6);
+      const fh = Math.round(fw * (1 + rnd() * 0.4));
       const face = {
         x: Math.floor(rnd() * (img.width - fw)),
-        y: Math.floor(rnd() * (img.height - fw)),
+        y: Math.floor(rnd() * (img.height - fh)),
         width: fw,
-        height: fw,
+        height: fh,
       };
       const r = faceCropRect(img, face);
       if (!r) continue;
+      if (1.2 * fh <= Math.min(img.width, img.height)) {
+        expect(r.x).toBeLessThanOrEqual(face.x);
+        expect(r.y).toBeLessThanOrEqual(face.y);
+        expect(r.x + r.size).toBeGreaterThanOrEqual(face.x + fw);
+        expect(r.y + r.size).toBeGreaterThanOrEqual(face.y + fh);
+      }
       for (const n of [r.x, r.y, r.size]) expect(Number.isInteger(n)).toBe(true);
       expect(r.x).toBeGreaterThanOrEqual(0);
       expect(r.y).toBeGreaterThanOrEqual(0);
