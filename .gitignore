@@ -18,3 +18,4 @@ playwright-report/
 public/demo/
 public/mediapipe/
 fixtures/source/
+.sweep/
