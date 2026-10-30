@@ -4,6 +4,7 @@ RUN npm install -g bun@1.4.2
 
 WORKDIR /app
 COPY package.json bun.lock ./
+COPY scripts/mediapipe-assets.ts scripts/
 RUN bun install --frozen-lockfile
 COPY . .
 
