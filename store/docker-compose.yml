@@ -1,0 +1,49 @@
+# Local demo shop: WordPress + WooCommerce on http://localhost:8080.
+# Images come from the public.ecr.aws mirror because Docker Hub lookups fail on some hosts.
+#
+# No host bind mounts: on some Docker hosts the daemon cannot see the repo's files, so
+# setup.ts copies the plugin and the seed data in with `docker compose cp`.
+x-wp-env: &wp-env
+  WORDPRESS_DB_HOST: db
+  WORDPRESS_DB_USER: wordpress
+  WORDPRESS_DB_PASSWORD: wordpress
+  WORDPRESS_DB_NAME: wordpress
+
+services:
+  db:
+    image: public.ecr.aws/docker/library/mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    image: public.ecr.aws/docker/library/wordpress:latest
+    restart: unless-stopped
+    depends_on: [db]
+    ports:
+      - "8080:80"
+    environment: *wp-env
+    volumes:
+      - wp_data:/var/www/html
+
+  # wp-cli, kept alive so setup.ts can `exec` into it. Shares the WordPress files.
+  cli:
+    image: public.ecr.aws/docker/library/wordpress:cli
+    restart: unless-stopped
+    user: "33:33"
+    depends_on: [db]
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      <<: *wp-env
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+    volumes:
+      - wp_data:/var/www/html
+
+volumes:
+  db_data:
+  wp_data:
