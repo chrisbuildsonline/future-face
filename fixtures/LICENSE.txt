@@ -1,0 +1,19 @@
+Fixtures license and provenance
+
+Source face
+- Commons file page: https://commons.wikimedia.org/wiki/File:This_Person_Does_Not_Exist_example.jpg
+- Direct file URL: https://upload.wikimedia.org/wikipedia/commons/1/1c/This_Person_Does_Not_Exist_example.jpg
+- Author: StyleGAN2 (generated via https://www.thispersondoesnotexist.com), uploaded by Lallint
+- The person shown does not exist.
+- License ({{PD-Robot}}, text shown on the Commons file page):
+  "This file is in the public domain because it is the work of a computer
+  algorithm or artificial intelligence and does not contain sufficient human
+  authorship to support a copyright claim."
+
+Derived files
+Every file in fixtures/demo/ is derived from that face. They are the output of
+YouCam AI Aging Generator, AI Skin Simulation and AI Skin Analysis, run on the
+record date given by "recordedAt" in fixtures/demo/result.json (2026-10-30),
+plus resizing and re-encoding of the original image. fixtures/demo/input.jpg is
+the re-encoded copy of the source face. The scores in result.json come from AI
+Skin Analysis.

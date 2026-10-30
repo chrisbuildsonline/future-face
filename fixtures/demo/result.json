@@ -1,0 +1,124 @@
+{
+  "recordedAt": "2026-10-30T03:10:21.686Z",
+  "source": "fixtures/source/source.md",
+  "inputAge": 38,
+  "frames": [
+    12,
+    16,
+    20,
+    24,
+    27,
+    31,
+    35,
+    39,
+    43,
+    47,
+    51,
+    55,
+    58,
+    62,
+    66,
+    70
+  ],
+  "horizons": [
+    {
+      "years": 10,
+      "targetAge": 48,
+      "resAge": 47,
+      "now": {
+        "image": "now-10.jpg",
+        "analysis": {
+          "concerns": {
+            "texture": {
+              "raw_score": 94.17453408241272,
+              "ui_score": 91
+            },
+            "age_spot": {
+              "raw_score": 97.59812927246094,
+              "ui_score": 94
+            },
+            "wrinkle": {
+              "raw_score": 75.68322420120239,
+              "ui_score": 75
+            }
+          },
+          "skinAge": 37,
+          "overall": 86.66666666666667
+        }
+      },
+      "spf": {
+        "image": "spf-10.jpg",
+        "analysis": {
+          "concerns": {
+            "texture": {
+              "raw_score": 97.94148802757263,
+              "ui_score": 96
+            },
+            "age_spot": {
+              "raw_score": 99.20855712890625,
+              "ui_score": 97
+            },
+            "wrinkle": {
+              "raw_score": 82.04146027565002,
+              "ui_score": 77
+            }
+          },
+          "skinAge": 36,
+          "overall": 90
+        }
+      }
+    },
+    {
+      "years": 20,
+      "targetAge": 58,
+      "resAge": 58,
+      "now": {
+        "image": "now-20.jpg",
+        "analysis": {
+          "concerns": {
+            "texture": {
+              "raw_score": 91.40293002128601,
+              "ui_score": 87
+            },
+            "age_spot": {
+              "raw_score": 96.42194366455078,
+              "ui_score": 92
+            },
+            "wrinkle": {
+              "raw_score": 71.2447464466095,
+              "ui_score": 73
+            }
+          },
+          "skinAge": 43,
+          "overall": 84
+        }
+      },
+      "spf": {
+        "image": "spf-20.jpg",
+        "analysis": {
+          "concerns": {
+            "age_spot": {
+              "raw_score": 98.78033447265625,
+              "ui_score": 97
+            },
+            "texture": {
+              "raw_score": 97.53953814506531,
+              "ui_score": 96
+            },
+            "wrinkle": {
+              "raw_score": 79.12960052490234,
+              "ui_score": 76
+            }
+          },
+          "skinAge": 41,
+          "overall": 89.66666666666667
+        }
+      }
+    }
+  ],
+  "settings": {
+    "spots": 0.24,
+    "wrinkle": 0.24,
+    "texture": 0.24
+  }
+}
