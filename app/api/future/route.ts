@@ -24,6 +24,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  // ponytail: chunked bodies without Content-Length still get parsed; a proxy body limit covers that.
+  if (Number(req.headers.get("content-length")) > MAX_BYTES + 64 * 1024) return fail(413, "file_too_large");
   let form: FormData;
   try {
     form = await req.formData();

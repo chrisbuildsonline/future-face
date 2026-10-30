@@ -90,6 +90,17 @@ describe("POST /api/future", () => {
     expect((await res.json()).error).toEqual({ kind: "file_too_large", message: errors.file_too_large });
   });
 
+  test("huge content-length -> 413 before the body is parsed, no fetch", async () => {
+    const form = new FormData();
+    form.append("city", "Lisbon");
+    const req = new Request("http://x/api/future", { method: "POST", body: form });
+    const big = new Request(req, { headers: { "content-type": req.headers.get("content-type")!, "content-length": "20000000" } });
+    const res = await POST(big);
+    expect(res.status).toBe(413);
+    expect((await res.json()).error.kind).toBe("file_too_large");
+    expect(fetchCalls).toHaveLength(0);
+  });
+
   test("invalid city -> 400 and no fetch", async () => {
     const res = await post({ city: "<b>" });
     expect(res.status).toBe(400);
