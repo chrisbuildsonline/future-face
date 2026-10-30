@@ -4,7 +4,7 @@ A 2 to 2.5 minute walkthrough for a live presenter or the demo video. It needs n
 
 ## Before you start
 
-- Run `bun install`, then `bun run dev`, and open http://localhost:3000 in a desktop-width window.
+- Run `bun install`, then `bun run dev`, and open http://localhost:3000 in a desktop-width window. Or skip the install and open the hosted copy, https://future-face.5-78-152-178.sslip.io.
 - No `.env` is needed. The demo face is a public-domain StyleGAN2 image; the person does not exist ([fixtures/LICENSE.txt](../fixtures/LICENSE.txt)).
 - The numbers below are the recorded ones from [fixtures/demo/result.json](../fixtures/demo/result.json). The UV card shows a recorded Nambour reading of 7.8.
 - The product is the first SPF 50 cream in [fixtures/products.json](../fixtures/products.json), a real product from Open Beauty Facts. Below it is called "the product"; read its brand and name off the screen. For a video with no brand on screen, start the server with the generic catalogue (`FF_CATALOGUE=generic`).

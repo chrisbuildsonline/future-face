@@ -10,6 +10,10 @@ On the demo face at +20 years, Skin Analysis reads wrinkles **71.2 → 79.1**, t
 
 Built for the [YouCam API Skin AI & eCommerce VTO Hackathon](https://youcam-api-skin-ai-ecommerce.devpost.com/). Demo script: [docs/DEMO.md](docs/DEMO.md).
 
+## Try it
+
+Hosted at https://future-face.5-78-152-178.sslip.io. It opens on the recorded demo, so no key or account is needed. The live path is on for uploads: drop a selfie, type a city and it runs the three YouCam APIs on your photo.
+
 ## Try it in 30 seconds
 
 No key, no account, no upload needed.
