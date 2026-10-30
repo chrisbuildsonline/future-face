@@ -55,6 +55,13 @@ describe("lib/copy", () => {
     expect(JSON.stringify(copy).toLowerCase()).toContain("not a prognosis");
   });
 
+  test("exports the routine copy, and it is clean", () => {
+    expect(copy.routine.cta).toBe("Build my SPF routine");
+    expect(copy.routine.checkout.length).toBeGreaterThan(0);
+    expect(copy.routine.demoNote.toLowerCase()).toContain("demo");
+    expect(findBannedWords(copy.routine)).toEqual([]);
+  });
+
   test("contains none of the banned words in any exported string", () => {
     expect(findBannedWords(copy)).toEqual([]);
   });

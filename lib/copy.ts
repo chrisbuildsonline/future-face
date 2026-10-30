@@ -140,6 +140,40 @@ export const result = {
   },
 } as const;
 
+// The SPF routine + bag that opens from the result (products from lib/routine.ts, all fictional).
+export const routine = {
+  cta: "Build my SPF routine",
+  ctaNote: "Three fictional products, sized to the UV where you live.",
+  eyebrow: "Your SPF routine",
+  titlePrefix: "Your routine for",
+  everyMorning: "every morning.",
+  stepLabel: "Step",
+  why: "Why this step",
+  add: "Add",
+  added: "Added",
+  bagTitle: "Your bag",
+  bagEmpty: "Nothing here yet. Add a step to start your routine.",
+  subtotal: "Subtotal",
+  shipping: "Shipping",
+  shippingValue: "Free in the demo",
+  checkout: "Checkout",
+  demoNote: "This is a demo store, so no order was placed and nothing was charged. The products are fictional.",
+  item: "item",
+  items: "items",
+  viewBag: "View bag",
+  close: "Close",
+  fiction: "Fictional products. No brands, no logos.",
+  facts: {
+    spf: "SPF, every morning",
+    amountValue: "¼ tsp",
+    amount: "for face and neck",
+    hours: "h",
+    reapply: "between top-ups outdoors",
+    noReapplyValue: "—",
+    noReapply: "no top-up on a city day",
+  },
+} as const;
+
 // The upload step on the landing page.
 export const upload = {
   eyebrow: "Your own face",
