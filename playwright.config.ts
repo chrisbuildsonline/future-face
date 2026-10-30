@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3100;
+// E2E_PORT: run against a fresh build when a stale server holds 3100 (reuseExistingServer would test it).
+const PORT = Number(process.env.E2E_PORT ?? 3100);
 
 export default defineConfig({
   testDir: "./e2e",

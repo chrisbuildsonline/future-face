@@ -14,6 +14,7 @@
     "record": "bun scripts/record.ts",
     "record:uv": "bun scripts/record-uv.ts",
     "e2e": "playwright test",
+    "e2e:fresh": "E2E_PORT=3123 playwright test",
     "typecheck": "tsc --noEmit",
     "docker:build": "docker build -t future-face .",
     "docker:test": "bun scripts/docker-test.ts"
