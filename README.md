@@ -88,8 +88,25 @@ LIVE_RUNS_MAX=5
 | `bun run test` | Unit tests (`bun test lib`) |
 | `bun run typecheck` | `tsc --noEmit` |
 | `bun run e2e` | Playwright: builds the app, serves it on port 3100 and runs [e2e/](e2e/). First time, run `bunx playwright install chromium`. |
+| `bun run docker:build` | Build the Docker image `future-face` |
+| `bun run docker:test` | Build the image, run unit tests, typecheck and e2e inside it, and fail unless all pass. Log lands in `test-results/docker-suite.log`. |
 | `bun run record` | Re-records [fixtures/demo/](fixtures/demo/) with one live run on the source face. Needs `YOUCAM_SECRET_KEY`; costs about 46 units (reuses a recorded aging step if present). The source face lives in `fixtures/source/`, which is git-ignored. |
 | `bun run record:uv` | Re-records today's Nambour UV reading into `fixtures/demo/uv.json` |
+
+## Run it in Docker
+
+No keys needed; the container serves the recorded demo.
+
+```sh
+bun run docker:build
+docker run -p 3000:3000 future-face
+```
+
+Then open http://localhost:3000. To run the whole suite (unit tests, typecheck, Playwright) inside the image:
+
+```sh
+bun run docker:test
+```
 
 ## API
 
