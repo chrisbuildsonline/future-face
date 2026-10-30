@@ -21,7 +21,8 @@ export const landing = {
     titleAccent: "Twice.",
     lead: "One face kept living as now. The other wore sunscreen every day in your city. See them side by side, measured, with the routine that closes the gap.",
     cta: "See your two futures",
-    ctaNote: "No account needed. A demo face is ready if you'd rather not upload.",
+    ctaNote: "Opens a recorded demo face. No upload, no account.",
+    ctaAlt: "Or use your own selfie",
   },
   visual: {
     label: "Illustration of the two-future slider",
@@ -75,6 +76,87 @@ export const landing = {
     fiction: "Product names are fictional. Built for the YouCam API Skin AI hackathon.",
     license: "MIT licensed",
   },
+} as const;
+
+// The two-face result screen (demo at /result, live runs on the landing).
+export const result = {
+  nav: { back: "Back", own: "Try your own selfie" },
+  eyebrow: { demo: "Demo face", live: "Your selfie" },
+  titlePrefix: "You at",
+  titleAccent: "Twice.",
+  lead: "Left, the face as you live now. Right, the same frame with daily SPF. Drag the divider to compare.",
+  horizonLabel: "Years ahead",
+  today: "Age read today",
+  slider: {
+    label: "Divider between the two futures",
+    left: "As you live now",
+    right: "With daily SPF",
+  },
+  disclaimer: "Illustrative projection, not a prognosis.",
+  frame: {
+    picked: "Aging Generator frame: picked res_age",
+    forTarget: "for target",
+    nearest: "The generator returns preset ages, so we use the nearest one.",
+  },
+  measured: {
+    eyebrow: "Read by AI Skin Analysis",
+    title: "The measured line",
+    higher: "Higher = better-looking skin",
+    foot: "Each number is the model's own reading of that render (Skin Analysis raw_score, 0 to 100), not a reading of you.",
+    labels: { wrinkle: "Wrinkles", texture: "Texture", spots: "Spots" } as Record<string, string>,
+    order: ["wrinkle", "texture", "spots"],
+    intensity: "SPF intensity",
+    source: "Source",
+  },
+  citation: {
+    eyebrow: "Why this intensity",
+    stat: "24%",
+    statLabel: "less skin aging with daily sunscreen",
+    how: "The SPF render dials spots, wrinkles and texture by this amount on the model's 0 to 1 scale.",
+    doiLabel: "doi",
+    link: "Read the trial",
+  },
+  closeup: {
+    eyebrow: "Up close",
+    title: "Under the eye, both ways.",
+    lead: "The change is quiet at this intensity. Same crop, same zoom, so the difference is the only difference.",
+  },
+  uv: {
+    eyebrow: "UV today",
+    peak: "Peak UV index forecast",
+    recorded: "Recorded reading",
+    live: "Live reading",
+    scaleLow: "0",
+    scaleHigh: "11+",
+    bands: {
+      low: "Low UV",
+      moderate: "Moderate UV",
+      high: "High UV",
+      very_high: "Very high UV",
+      extreme: "Extreme UV",
+    },
+    attribution: "Weather data by Open-Meteo.com",
+    attributionUrl: "https://open-meteo.com/",
+  },
+} as const;
+
+// The upload step on the landing page.
+export const upload = {
+  eyebrow: "Your own face",
+  title: "Bring a selfie. And your sun.",
+  titleAccent: "And your sun.",
+  lead: "A clear, front-facing photo and the city you live in. It runs through the same three YouCam models as the demo.",
+  file: "Choose a selfie",
+  fileHint: "JPG or PNG, facing the camera, up to 10 MB",
+  fileChange: "Change photo",
+  city: "Your city",
+  cityPlaceholder: "Lisbon",
+  cities: ["Lisbon", "Madrid", "London", "Stockholm", "Cape Town", "Sydney", "Brisbane", "Singapore", "Mexico City", "Los Angeles"],
+  submit: "Show my two futures",
+  loadingTitle: "Rendering your two futures",
+  loading: "Three YouCam models run one after another. A live run usually takes one to two minutes, so keep this tab open.",
+  elapsed: "elapsed",
+  resultLabel: "Your result",
 } as const;
 
 export const cityErrors = {
