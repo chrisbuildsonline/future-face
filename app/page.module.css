@@ -232,6 +232,33 @@
   max-width: 52ch;
 }
 
+/* Secondary action: a quiet white pill on the canvas, never competing with the primary. */
+.storeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 18px 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+  font-size: var(--t-small);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform var(--d-hover, 160ms) var(--ease);
+}
+.storeLink:hover {
+  transform: translateY(-1px);
+}
+.storeLink::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 @keyframes rise {
   from {
     opacity: 0;

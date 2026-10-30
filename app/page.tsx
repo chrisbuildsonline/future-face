@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { loadCatalogue } from "@/lib/catalogue";
+import { storeProduct } from "@/lib/products";
 import { brand, landing, upload } from "@/lib/copy";
+import { StoreLink } from "./components/StoreLink";
 import { TwoFutureMark } from "./components/TwoFutureMark";
 import { Upload } from "./components/Upload";
 import styles from "./page.module.css";
@@ -32,6 +35,8 @@ function Arrow() {
 
 export default function Home() {
   const { nav, hero, how, footer } = landing;
+  const catalogue = loadCatalogue();
+  const storeCode = storeProduct(catalogue)?.code ?? null;
   return (
     <>
       <header className={styles.nav}>
@@ -70,6 +75,7 @@ export default function Home() {
                 {hero.ctaAlt}
               </a>
             </p>
+            {storeCode ? <StoreLink code={storeCode} className={styles.storeLink} /> : null}
           </div>
         </section>
 
@@ -82,7 +88,7 @@ export default function Home() {
             </h2>
             <p className={styles.lead}>{upload.lead}</p>
           </div>
-          <Upload />
+          <Upload catalogue={catalogue} />
         </section>
 
         <section id="how" className={styles.how} aria-labelledby="how-title">
