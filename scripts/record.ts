@@ -2,7 +2,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
 import { SPF_SETTINGS } from "../lib/evidence";
-import { cropToCenter, prepareForAging, prepareForSimulation } from "../lib/image";
+import { prepareForAging, prepareForSimulation } from "../lib/image";
+import { withCropLadder } from "../lib/pipeline";
 import { ageFace, analyzeSkin, downloadFrame, hasYoucamKey, pickNearest, simulateSkin, YoucamError } from "../lib/youcam";
 
 if (!hasYoucamKey()) {
@@ -64,18 +65,12 @@ async function main() {
   const horizons: any[] = [];
   for (const { years, resAge, raw } of picked) {
     console.log(`step 3 (+${years}): simulate SPF arm (~4 units)`);
-    // No crop: the raw frame already holds the whole head. One gentler crop only if the face is too small.
-    let now = await prepareForSimulation(raw);
-    let spf: Buffer;
-    try {
-      spf = await simulateSkin(now, SPF_SETTINGS, opts);
-    } catch (e) {
-      if (!(e instanceof YoucamError) || e.kind !== "face_too_small") throw e;
-      console.log("  face_too_small: retrying once with cropToCenter(raw, 0.92)");
-      now = await prepareForSimulation(await cropToCenter(raw, 0.92));
-      spf = await simulateSkin(now, SPF_SETTINGS, opts);
-    }
-    spf = await sharp(spf).jpeg({ quality: 92 }).toBuffer(); // the API returns png
+    // No crop first: the raw frame already holds the whole head. Crop in (CROP_LADDER) only if the face is too small.
+    const { now, sim } = await withCropLadder(raw, prepareForSimulation, async (now) => ({
+      now,
+      sim: await simulateSkin(now, SPF_SETTINGS, opts),
+    }));
+    const spf = await sharp(sim).jpeg({ quality: 92 }).toBuffer(); // the API returns png
     await save(`now-${years}.jpg`, now);
     await save(`spf-${years}.jpg`, spf);
 

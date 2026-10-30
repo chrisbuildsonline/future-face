@@ -9,6 +9,27 @@ import type { Opts, SkinAnalysis } from "./youcam";
 const HORIZONS = [10, 20];
 const ACTIONS = ["wrinkle", "age_spot", "texture"];
 
+/** Centre-crop fractions tried, in order, after YouCam says face_too_small. At most one retry per entry. */
+export const CROP_LADDER = [0.75, 0.55];
+
+/** Run attempt on prepare(raw); on face_too_small retry on each CROP_LADDER crop. Other errors, or the last face_too_small, are thrown. */
+export async function withCropLadder<T>(
+  raw: Uint8Array,
+  prepare: (bytes: Uint8Array) => Promise<Buffer>,
+  attempt: (prepared: Buffer) => Promise<T>,
+): Promise<T> {
+  let err: unknown;
+  for (const fraction of [1, ...CROP_LADDER]) {
+    try {
+      return await attempt(await prepare(fraction === 1 ? raw : await cropToCenter(raw, fraction)));
+    } catch (e) {
+      if (!(e instanceof YoucamError) || e.kind !== "face_too_small") throw e;
+      err = e;
+    }
+  }
+  throw err;
+}
+
 export type Measured = { key: string; analysisKey: string; now: number; spf: number; delta: number };
 export type FutureResult = {
   source: "live" | "demo";
@@ -78,7 +99,7 @@ export async function runLive(
   const input = await prepareForAging(selfie).catch(() => {
     throw new YoucamError("decode_failed", "bad_format"); // sharp can't open it (garbage, HEIC)
   });
-  const aged = await deps.ageFace(input, opts);
+  const aged = await withCropLadder(input, prepareForAging, (b) => deps.ageFace(b, opts));
   if (aged.inputAge === undefined) throw new YoucamError("no_input_age", "no_face");
   const inputAge = aged.inputAge;
 
@@ -87,17 +108,12 @@ export async function runLive(
       const frame = pickNearest(aged.frames, inputAge, years);
       if (!frame) throw new YoucamError("no_frame", "unknown");
       const raw = await deps.downloadFrame(frame.url, opts);
-      // No crop: the raw frame already holds the whole head. One gentler crop only if the face is too small.
-      let now = await prepareForSimulation(raw);
-      let spf: Buffer;
-      try {
-        spf = await deps.simulateSkin(now, SPF_SETTINGS, opts);
-      } catch (e) {
-        if (!(e instanceof YoucamError) || e.kind !== "face_too_small") throw e;
-        now = await prepareForSimulation(await cropToCenter(raw, 0.92));
-        spf = await deps.simulateSkin(now, SPF_SETTINGS, opts);
-      }
-      spf = await sharp(spf).jpeg({ quality: 92 }).toBuffer(); // the API returns png
+      // No crop first: the raw frame already holds the whole head. Crop in only if the face is too small.
+      const { now, sim } = await withCropLadder(raw, prepareForSimulation, async (now) => ({
+        now,
+        sim: await deps.simulateSkin(now, SPF_SETTINGS, opts),
+      }));
+      const spf = await sharp(sim).jpeg({ quality: 92 }).toBuffer(); // the API returns png
       const [nowA, spfA] = await Promise.all([
         deps.analyzeSkin(now, { ...opts, actions: ACTIONS }),
         deps.analyzeSkin(spf, { ...opts, actions: ACTIONS }),

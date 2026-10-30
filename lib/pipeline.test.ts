@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
 import { demoImagePath, loadDemo } from "./fixtures";
-import { demoResult, measuredLine, runLive } from "./pipeline";
+import { CROP_LADDER, demoResult, measuredLine, runLive } from "./pipeline";
 import { YoucamError, type SkinAnalysis } from "./youcam";
 
 const an = (c: Record<string, number>, skinAge?: number): SkinAnalysis => ({
@@ -99,34 +99,102 @@ describe("runLive", () => {
     expect(r.input?.startsWith("data:image/jpeg;base64,")).toBe(true);
   });
 
-  test("face_too_small triggers exactly one cropped retry per horizon", async () => {
-    let calls = 0;
-    const { d, log } = deps({
+  const settle = () => new Promise((r) => setTimeout(r, 100));
+  const tooSmall = () => new YoucamError("error_src_face_too_small", "face_too_small");
+  // 1 frame for both horizons is not possible, so widths are collected across both parallel ladders.
+  const failing = (fails: (w: number) => boolean) => {
+    const widths: number[] = [];
+    return {
+      widths,
       simulateSkin: async (bytes: Uint8Array) => {
-        const n = ++calls;
-        log.simWidths.push((await sharp(bytes).metadata()).width!);
-        if (n === 1) throw new YoucamError("error_src_face_too_small", "face_too_small");
+        const w = (await sharp(bytes).metadata()).width!;
+        widths.push(w);
+        if (fails(w)) throw tooSmall();
         return png();
       },
-    });
+    };
+  };
+  const w75 = Math.round(1020 * 0.75);
+  const w55 = Math.max(480, Math.round(1020 * 0.55)); // prepareForSimulation upscales to a 480 floor
+
+  test("face_too_small climbs the crop ladder 0.75 then 0.55", async () => {
+    const f = failing((w) => w > w55);
+    const { d } = deps({ simulateSkin: f.simulateSkin });
     const r = await runLive(await mk(), d);
     expect(r.horizons).toHaveLength(2);
-    expect(calls).toBe(3); // 2 horizons + 1 retry
-    expect(log.simWidths).toContain(Math.round(1020 * 0.92));
+    expect(CROP_LADDER).toEqual([0.75, 0.55]);
+    expect(f.widths.filter((w) => w === 1020)).toHaveLength(2);
+    expect(f.widths.filter((w) => w === w75)).toHaveLength(2);
+    expect(f.widths.filter((w) => w === w55)).toHaveLength(2);
+    expect(f.widths).toHaveLength(6);
   });
 
-  test("a second face_too_small is not retried again", async () => {
+  test("stops after the first success", async () => {
+    const f = failing((w) => w === 1020);
+    const { d } = deps({ simulateSkin: f.simulateSkin });
+    await runLive(await mk(), d);
+    expect(f.widths).toHaveLength(4); // 2 horizons x (full + 0.75)
+    expect(f.widths.filter((w) => w === w75)).toHaveLength(2);
+  });
+
+  test("a third face_too_small surfaces as face_too_small after exactly 3 simulate calls", async () => {
+    const f = failing(() => true);
+    const { d } = deps({ simulateSkin: f.simulateSkin });
+    const err = await runLive(await mk(), d).catch((e) => e);
+    expect(err).toBeInstanceOf(YoucamError);
+    expect(err.kind).toBe("face_too_small");
+    await settle(); // Promise.all rejects early; let the other horizon's ladder finish
+    expect(f.widths.sort((a, b) => b - a)).toEqual([1020, 1020, w75, w75, w55, w55]); // both horizons: 3 calls each
+  });
+
+  test("non-face_too_small errors are not retried", async () => {
     let calls = 0;
     const { d } = deps({
       simulateSkin: async () => {
         calls++;
-        throw new YoucamError("error_src_face_too_small", "face_too_small");
+        throw new YoucamError("http_500", "unknown");
       },
     });
     const err = await runLive(await mk(), d).catch((e) => e);
-    expect(err).toBeInstanceOf(YoucamError);
+    expect(err.kind).toBe("unknown");
+    await settle();
+    expect(calls).toBe(2); // one per horizon, no retries
+  });
+
+  test("ageFace face_too_small climbs the same ladder on the input selfie", async () => {
+    const seen: number[] = [];
+    const { d } = deps({
+      ageFace: async (bytes: Uint8Array) => {
+        const w = (await sharp(bytes).metadata()).width!;
+        seen.push(w);
+        if (seen.length < 3) throw tooSmall();
+        return { inputAge: 30, frames };
+      },
+    });
+    await runLive(await mk(1600, 1600), d);
+    expect(seen).toEqual([1600, Math.round(1600 * 0.75), Math.round(1600 * 0.55)]);
+  });
+
+  test("ageFace: ladder exhausted throws face_too_small, other errors at once", async () => {
+    let n = 0;
+    const { d } = deps({
+      ageFace: async () => {
+        n++;
+        throw tooSmall();
+      },
+    });
+    const err = await runLive(await mk(1600, 1600), d).catch((e) => e);
     expect(err.kind).toBe("face_too_small");
-    expect(calls).toBeLessThanOrEqual(4);
+    expect(n).toBe(3);
+    n = 0;
+    const { d: d2 } = deps({
+      ageFace: async () => {
+        n++;
+        throw new YoucamError("http_500", "unknown");
+      },
+    });
+    await runLive(await mk(1600, 1600), d2).catch(() => {});
+    expect(n).toBe(1);
   });
 
   test("undecodable upload -> bad_format and ageFace is never called", async () => {
