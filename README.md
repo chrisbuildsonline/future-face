@@ -1,12 +1,12 @@
 # Future Face
 
-**Two faces of you, 10 or 20 years on, side by side: one that kept living as now, and the same face after daily sunscreen, both measured by the same model.**
+**Two faces of you in 20 or 30 years, side by side: one that kept living as now, and one that wore sunscreen every day, both measured by the same model.**
 
-One selfie goes through three YouCam APIs in a row. The **AI Aging Generator** projects you forward. **AI Skin Simulation** takes that same frame and dials spots, wrinkles and texture by 0.24, an intensity taken from a 4.5-year trial of daily sunscreen (Hughes et al., 2013). **AI Skin Analysis** then reads both renders, so the gap shows up as numbers. Then the app sizes an SPF routine of real products (from Open Beauty Facts) to your city's UV index. A store can embed all of it on a product page with two lines of HTML.
+One selfie goes through three YouCam APIs in a row. The **AI Aging Generator** projects you forward. The "as you live now" face is the frame for the full horizon; the "with daily SPF" face is an earlier frame, 24% fewer years ahead, because a 4.5-year trial found 24% less skin aging with daily sunscreen (Hughes et al., 2013). **AI Skin Simulation** gives the SPF face a light finishing pass (spots, wrinkles and texture at 0.24). **AI Skin Analysis** then reads both renders, so the gap shows up as numbers. Then the app sizes an SPF routine of real products (from Open Beauty Facts) to your city's UV index. A store can embed all of it on a product page with two lines of HTML.
 
-On the demo face at +20 years, Skin Analysis reads wrinkles **71.2 → 79.1**, texture **91.4 → 97.5** and spots **96.4 → 98.8** (raw_score, higher = better-looking skin). These are the model's readings of two renders. They are an illustrative projection, not a prognosis.
+On the demo face in 30 years (frame age 66 as you live now, 58 with daily SPF), Skin Analysis reads wrinkles **21.6 → 61.0**, texture **64.1 → 79.6** and spots **63.4 → 83.7** (raw_score, higher = better-looking skin). These are the model's readings of two renders. They are an illustrative projection, not a prognosis.
 
-![The result screen: the demo face at 58 with a drag divider between "As you live now" and "With daily SPF", the measured line from AI Skin Analysis, a close-up and the UV card](docs/screenshots/result-desktop.png)
+![The result screen: the demo face in 30 years, frame age 66 against 58, with a drag divider between "As you live now" and "With daily SPF", the measured line from AI Skin Analysis, a close-up and the UV card](docs/screenshots/result-desktop.png)
 
 Built for the [YouCam API Skin AI & eCommerce VTO Hackathon](https://youcam-api-skin-ai-ecommerce.devpost.com/). Demo script: [docs/DEMO.md](docs/DEMO.md).
 
@@ -23,14 +23,14 @@ bun install
 bun run dev
 ```
 
-Open http://localhost:3000 and click **See your two futures**. That opens `/result`, a recorded live run of all three YouCam APIs on a public-domain StyleGAN2 face (the person does not exist, see [fixtures/LICENSE.txt](fixtures/LICENSE.txt)). Drag the divider, switch **+10 yrs** / **+20 yrs**, click **Source** on any row, then **Build my SPF routine**.
+Open http://localhost:3000 and click **See your two futures**. That opens `/result`, a recorded live run of all three YouCam APIs on a public-domain face made by StyleGAN ([File:Man_2.jpg](https://commons.wikimedia.org/wiki/File:Man_2.jpg) on Wikimedia Commons, {{PD-algorithm}}; the person does not exist, see [fixtures/LICENSE.txt](fixtures/LICENSE.txt)). Drag the divider, switch **+20 yrs** / **+30 yrs**, click **Source** on any row, then **Build my SPF routine**.
 
 You need Bun. Next.js also needs a recent Node.js on the path.
 
 ## How it works
 
-1. **AI Aging Generator.** The selfie goes in. The API returns the age it reads today and a set of frames at preset ages (`res_age`). For each horizon the app picks the frame nearest to today's age + 10 and + 20 (ties go to the older frame) and says so under the image: "picked res_age 58 for target 58".
-2. **AI Skin Simulation.** That same frame goes in with `spots`, `wrinkle` and `texture` at **0.24** each on the model's 0 to 1 scale. This is the "With daily SPF" face. The 0.24 comes from the 24% less skin aging reported for daily sunscreen users against discretionary users in Hughes MCB, Williams GM, Baker P, Green AC. *Sunscreen and prevention of skin aging: a randomized trial.* Ann Intern Med. 2013;158(11):781-790. doi:[10.7326/0003-4819-158-11-201306040-00002](https://doi.org/10.7326/0003-4819-158-11-201306040-00002). Every intensity on screen has a **Source** chip that opens this citation.
+1. **AI Aging Generator.** The selfie goes in. The API returns the age it reads today and a set of frames at preset ages (`res_age`). For each horizon (+20 and +30 years) the app picks two frames (ties go to the older frame). The "As you live now" face is the frame nearest to today's age + years. The "With daily SPF" face is the frame nearest to today's age + years × 0.76, that is 24% fewer years ahead (`SPF_AGING_REDUCTION` in [lib/evidence.ts](lib/evidence.ts)), because the trial below found 24% less skin aging with daily sunscreen. The trial measured skin aging (surface texture), not years, so this is an illustration. Each face is captioned with its frame: on the demo face at +30, "Frame age 66" and "Frame age 58". If both land on the same frame, the result says so and shows no measured gap.
+2. **AI Skin Simulation.** The SPF frame then gets a finishing pass with `spots`, `wrinkle` and `texture` at **0.24** each on the model's 0 to 1 scale. The earlier frame is what makes the two faces differ; this pass only polishes the SPF face. Both the 24% and the 0.24 come from the 24% less skin aging reported for daily sunscreen users against discretionary users in Hughes MCB, Williams GM, Baker P, Green AC. *Sunscreen and prevention of skin aging: a randomized trial.* Ann Intern Med. 2013;158(11):781-790. doi:[10.7326/0003-4819-158-11-201306040-00002](https://doi.org/10.7326/0003-4819-158-11-201306040-00002). Every intensity on screen has a **Source** chip that opens this citation.
 3. **AI Skin Analysis.** Both renders are read with the same SD actions (`wrinkle`, `age_spot`, `texture`). The **measured line** shows each `raw_score` (0 to 100, higher = better-looking skin) for both faces and the difference. It is labelled as the model's reading of a render, not a reading of you.
 4. **UV where you live.** The city you type is looked up on [Open-Meteo](https://open-meteo.com/) (free, no key), which returns today's peak UV index forecast. The UV card shows the reading with "Weather data by Open-Meteo.com · CC BY 4.0". The demo uses a recorded reading for Nambour, Queensland (UV 7.8), where the Hughes trial ran.
 5. **Build my SPF routine.** The UV index sets the WHO band, and the band sets the routine: SPF 30 for low and moderate UV, SPF 50 for high and above. Two finger lengths (about ¼ teaspoon) for face and neck, and a top-up every 2 hours outdoors from moderate UV up. Each routine has three steps (morning, midday top-up, evening), drawn from real products in [fixtures/products.json](fixtures/products.json) (Open Beauty Facts data and photos, ODbL / CC BY-SA). Each card shows the photo, brand, SPF, size, why this step, and a link to the product on Open Beauty Facts. There are no prices: **Save** keeps a step in **Your routine**. `/result?product=<barcode>` makes that product the morning step and says whether its SPF covers the day; `/result?embed=1` is the same view for the store widget, and `/store/<barcode>` is a made-up shop, Sunday Pharmacy, showing the widget ([public/widget.js](public/widget.js)) embedded the way a store would.
@@ -53,8 +53,8 @@ All calls are server-side, in [lib/youcam.ts](lib/youcam.ts). Each one registers
 
 | API | What it does here | Code |
 | --- | --- | --- |
-| AI Aging Generator | Reads today's age and returns `res_age` frames; the app keeps the two nearest to +10 and +20 years | `ageFace`, `pickNearest`, `downloadFrame` in [lib/youcam.ts](lib/youcam.ts) |
-| AI Skin Simulation | Renders the "With daily SPF" face from the same frame, with spots/wrinkle/texture at 0.24 | `simulateSkin` in [lib/youcam.ts](lib/youcam.ts); intensities and citation in [lib/evidence.ts](lib/evidence.ts) |
+| AI Aging Generator | Reads today's age and returns `res_age` frames; per horizon (+20, +30 years) the app keeps the frame nearest to the full horizon for "as you live now" and the frame 24% fewer years ahead for "with daily SPF" | `ageFace`, `pickNearest`, `downloadFrame` in [lib/youcam.ts](lib/youcam.ts); `pickArmFrames` in [lib/pipeline.ts](lib/pipeline.ts) |
+| AI Skin Simulation | A finishing pass on the "With daily SPF" frame, with spots/wrinkle/texture at 0.24 | `simulateSkin` in [lib/youcam.ts](lib/youcam.ts); intensities and citation in [lib/evidence.ts](lib/evidence.ts) |
 | AI Skin Analysis | Reads `wrinkle`, `age_spot` and `texture` raw_score on both renders | `analyzeSkin` in [lib/youcam.ts](lib/youcam.ts); `measuredLine` in [lib/pipeline.ts](lib/pipeline.ts) |
 
 A live run costs about 46 YouCam units: aging about 2, two simulations about 4 each, four analyses about 9 each.
@@ -179,7 +179,7 @@ Everything on screen is an illustrative projection, not a prognosis. Scores are 
 ## Licenses and credits
 
 - Code: MIT, see [LICENSE](LICENSE).
-- Demo face and derived fixtures: public domain StyleGAN2 image from Wikimedia Commons; provenance in [fixtures/LICENSE.txt](fixtures/LICENSE.txt).
+- Demo face and derived fixtures: public domain StyleGAN image from Wikimedia Commons ([File:Man_2.jpg](https://commons.wikimedia.org/wiki/File:Man_2.jpg), {{PD-algorithm}}); provenance in [fixtures/LICENSE.txt](fixtures/LICENSE.txt).
 - UV data: [Weather data by Open-Meteo.com](https://open-meteo.com/), CC BY 4.0, credited on the UV card.
 - Effect size: Hughes MCB et al., Ann Intern Med 2013;158(11):781-790, [doi:10.7326/0003-4819-158-11-201306040-00002](https://doi.org/10.7326/0003-4819-158-11-201306040-00002).
 - Skin AI: YouCam AI Aging Generator, AI Skin Simulation and AI Skin Analysis.

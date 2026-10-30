@@ -42,7 +42,7 @@ Status pills use tints, not new accents:
 
 | Pill | Background | Text | Example |
 |---|---|---|---|
-| neutral | `#ECE7E1` | `--ink-2` | "Demo face", "+10 yrs" |
+| neutral | `#ECE7E1` | `--ink-2` | "Demo face", "+20 yrs" |
 | accent | `--accent-soft` | `--accent` | "AI Skin Simulation", "Selected" |
 | good | `#E2EEE4` | `#2E6A43` | "Low UV" |
 | watch | `#F7EBCF` | `#87590F` | "High UV" |
@@ -54,7 +54,7 @@ colour. Numbers for the two series are `--ink` and `--accent` (text never uses `
 
 - **Display: Instrument Serif** (400, regular + italic) via `@fontsource/instrument-serif`. Titles,
   section heads, and every large number. The italic is used for exactly one accent word per title
-  ("Meet yourself at 45. *Twice.*").
+  ("Meet yourself in 30 years. *Twice.*").
 - **UI/body: Manrope Variable** (`@fontsource-variable/manrope`, 400–700). Everything else.
 - Numbers in Manrope use `font-variant-numeric: tabular-nums`.
 
@@ -92,7 +92,7 @@ Max line length 60ch for body, 22ch for display.
   arrow in `--ink`. Hover: arrow nudges 3px right, background lifts to `#2A2620`. Phone: full width.
 - **Secondary**: text link in `--ink` with a 1px underline offset 4px; or a white pill with
   `--shadow-card` when it sits on the canvas.
-- **Segmented control** (horizon `+10 / +20 yrs`): `--surface-sunk` track, `--r-pill`, selected
+- **Segmented control** (horizon `+20 / +30 yrs`): `--surface-sunk` track, `--r-pill`, selected
   segment is a white pill with `--shadow-card` and `--ink` text; unselected `--ink-2`.
 - **Focus**: `:focus-visible` = 3px `--accent` ring at 3px offset on every interactive element.
 - Touch targets ≥ 44px.
@@ -144,7 +144,7 @@ Max line length 60ch for body, 22ch for display.
     a sun arc (UV gauge, sun dot at ~72%) concentric with a skin-tone orb split by the slider handle;
     left half carries spots and grain ("as you live now"), right half is clean with a sheen ("with daily
     SPF"). An honest SVG illustration, not a render. Corner tags at the top (as in ref 04), the
-    `+10 / +20 yrs` segmented control at the bottom centre. Two floating chips overlap its edges:
+    `+20 / +30 yrs` segmented control at the bottom centre. Two floating chips overlap its edges:
     the UV scale chip (bottom-left) and the citation chip (upper right). A soft `--accent-glow`
     radial behind the card.
 - After the action (later feature): the upload step replaces the hero visual in place: a white card with
@@ -157,7 +157,7 @@ Max line length 60ch for body, 22ch for display.
 
 **Phone (390×844).** One job: start.
 - Nav 56px: wordmark + "How it works" text link.
-- Title 56px on 2 lines ("Meet yourself at 45. / *Twice.*"), lead 17px, then the visual card full
+- Title 56px on 2 lines ("Meet yourself in 30 years. / *Twice.*"), lead 17px, then the visual card full
   width (aspect 1:1, the SVG crops top and bottom; the two floating chips are dropped, the tags and
   horizon control stay inside the frame), then the primary pill full width, 64px tall. At 390×844 the
   pill lands at the bottom of the first viewport (thumb zone). It is also `position: sticky;
@@ -172,7 +172,7 @@ Max line length 60ch for body, 22ch for display.
 
 **Desktop.**
 - Top bar: back link, the city + UV pill ("Lisbon · UV 8 · watch"), the horizon segmented control
-  `+10 yrs | +20 yrs` centred, "Share" secondary on the right.
+  `+20 yrs | +30 yrs` centred, "Share" secondary on the right.
 - Main grid 7/5:
   - Left (7 cols): the before/after slider card, image ~640px tall, corner tags, handle centred.
     Caption under it in `--ink-2`: "Illustrative projection, not a prognosis."
