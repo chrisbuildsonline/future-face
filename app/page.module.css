@@ -109,6 +109,18 @@
   background: var(--ink-hover);
 }
 
+/* secondary: a white pill on the canvas, so the page keeps one primary pill */
+.navGhost {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+
+.navGhost:hover {
+  background: var(--surface);
+  color: var(--accent);
+}
+
 /* the result route: same frame as the landing sections */
 .page {
   max-width: calc(var(--max) + 2 * var(--gutter));

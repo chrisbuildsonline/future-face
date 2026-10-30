@@ -4,8 +4,30 @@
   width: 100%;
   max-width: var(--max);
   margin: 0 auto;
-  display: grid;
+  /* flex, not grid: the phone CTA is position: sticky against this whole section */
+  display: flex;
+  flex-direction: column;
   gap: 40px;
+}
+
+/* ---------- next step: the one primary pill ---------- */
+.next {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: center;
+  gap: 24px;
+  margin-top: -16px;
+}
+
+.nextNote {
+  justify-self: end;
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  text-align: right;
+}
+
+.nextCta {
+  width: 100%;
 }
 
 /* ---------- atoms ---------- */
@@ -924,6 +946,31 @@
   }
   .uvCity {
     font-size: 30px;
+  }
+  /* pinned to the thumb zone while the result is on screen */
+  .next {
+    position: sticky;
+    bottom: 16px;
+    z-index: 5;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0;
+  }
+  .nextNote {
+    display: none;
+  }
+  .nextCta {
+    height: 64px;
+    font-size: 17px;
+    box-shadow: 0 18px 36px -12px color-mix(in srgb, var(--ink) 55%, transparent);
+  }
+}
+
+@media (min-width: 721px) and (max-width: 960px) {
+  .next {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .nextCta {
+    width: auto;
   }
 }
 

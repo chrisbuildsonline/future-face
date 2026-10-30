@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
-import { landing, result as c } from "@/lib/copy";
+import { landing, result as c, routine as rc } from "@/lib/copy";
 import type { FutureResult } from "@/lib/pipeline";
 import type { Uv } from "@/lib/uv";
 import { uvBand } from "@/lib/uv-band";
 import s from "./Result.module.css";
+import { Arrow, Routine } from "./Routine";
+import r from "./Routine.module.css";
 
 type Horizon = FutureResult["horizons"][number];
 
@@ -284,12 +286,34 @@ function UvCard({ uv }: { uv: Uv }) {
 export function Result({ data, titleTag: Title = "h1" }: { data: FutureResult; titleTag?: "h1" | "h2" }) {
   const uid = useId();
   const [years, setYears] = useState(() => data.horizons[data.horizons.length - 1]?.years ?? 0);
+  const [routineOpen, setRoutineOpen] = useState(false);
+  const routineHead = useRef<HTMLHeadingElement>(null);
+  const routineId = `${uid}-routine`;
+
+  // Opening the routine moves focus (and the view) to its heading.
+  useEffect(() => {
+    if (routineOpen) {
+      routineHead.current?.focus({ preventScroll: true });
+      routineHead.current?.scrollIntoView({ block: "start" });
+    }
+  }, [routineOpen]);
+
   const idx = Math.max(0, data.horizons.findIndex((x) => x.years === years));
   const h = data.horizons[idx];
   if (!h) return null;
   const labelOf = (i: number, y: number) => landing.visual.horizon[i] ?? `+${y} yrs`;
 
+  const openRoutine = () => {
+    if (!routineOpen) {
+      setRoutineOpen(true);
+      return;
+    }
+    routineHead.current?.focus({ preventScroll: true });
+    routineHead.current?.scrollIntoView({ block: "start" });
+  };
+
   return (
+    <>
     <section className={s.result} aria-labelledby={`${uid}-t`}>
       <header className={s.head}>
         <div className={s.headCopy}>
@@ -346,6 +370,26 @@ export function Result({ data, titleTag: Title = "h1" }: { data: FutureResult; t
         <Closeup h={h} />
         {data.uv ? <UvCard uv={data.uv} /> : null}
       </div>
+
+      {data.uv ? (
+        <div className={s.next}>
+          <p className={s.nextNote}>{rc.ctaNote}</p>
+          <button
+            type="button"
+            className={`${r.cta} ${s.nextCta}`}
+            aria-expanded={routineOpen}
+            aria-controls={routineId}
+            onClick={openRoutine}
+          >
+            <span>{rc.cta}</span>
+            <span className={r.ctaIcon}>
+              <Arrow />
+            </span>
+          </button>
+        </div>
+      ) : null}
     </section>
+    {routineOpen && data.uv ? <Routine id={routineId} uv={data.uv} headingRef={routineHead} /> : null}
+    </>
   );
 }

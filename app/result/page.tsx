@@ -22,7 +22,7 @@ export default function ResultPage() {
           <Link href="/" className={`${styles.navLink} ${styles.navBack}`}>
             <span aria-hidden>←</span> {result.nav.back}
           </Link>
-          <Link href="/#upload" className={styles.navCta}>
+          <Link href="/#upload" className={`${styles.navCta} ${styles.navGhost}`}>
             {result.nav.own}
           </Link>
         </nav>
