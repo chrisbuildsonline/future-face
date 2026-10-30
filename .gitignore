@@ -8,6 +8,7 @@ CLAUDE.md
 .omc/
 .claude/
 design/refs/
+design/api-docs/
 .claude/settings.local.json
 .next/
 test-results/
