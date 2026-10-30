@@ -17,3 +17,7 @@ record date given by "recordedAt" in fixtures/demo/result.json (2026-10-30),
 plus resizing and re-encoding of the original image. fixtures/demo/input.jpg is
 the re-encoded copy of the source face. The scores in result.json come from AI
 Skin Analysis.
+
+UV reading
+- fixtures/demo/uv.json is a recorded reading from Open-Meteo (CC BY 4.0).
+  Weather data by Open-Meteo.com, https://open-meteo.com/
