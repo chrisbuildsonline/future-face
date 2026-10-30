@@ -1,52 +1,39 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { findProduct, loadCatalogue } from "@/lib/catalogue";
-import { isCode } from "@/lib/products";
+import { store as c } from "@/lib/copy";
+import { shelfOf } from "@/lib/shelves";
 import { ProductImage } from "../../components/Routine";
-import s from "./store.module.css";
+import { AddToBag } from "../Bag";
+import { Crumbs, KIND, ShopFooter, ShopHeader } from "../Shop";
+import s from "../store.module.css";
 
 // A preview of a made-up shop, "Sunday Pharmacy", with the Future Face widget embedded the way a store would.
 
 type Props = { params: Promise<{ barcode: string }> };
 
+// Every product of the active catalogue has a page (the fictional set's codes too); anything else is a 404.
 export function generateStaticParams() {
-  return loadCatalogue()
-    .filter((p) => isCode(p.code))
-    .map((p) => ({ barcode: p.code }));
+  return loadCatalogue().map((p) => ({ barcode: p.code }));
 }
 
-const lookup = (code: string) => (isCode(code) ? findProduct(code) : null);
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = lookup((await params).barcode);
+  const p = findProduct((await params).barcode);
   return { title: p ? `${p.name} · Sunday Pharmacy (store preview)` : "Sunday Pharmacy" };
 }
 
-const KIND: Record<string, string> = { cream: "Sun cream", fluid: "Sun fluid", stick: "Sun stick", spray: "Sun spray", cleanser: "Cleanser" };
-
 export default async function StorePage({ params }: Props) {
-  const p = lookup((await params).barcode);
+  const p = findProduct((await params).barcode);
   if (!p) notFound();
+  const shelf = shelfOf(p.kind);
   const snippet = `<script src="http://localhost:3000/widget.js" defer></script>\n<div data-future-face data-product="${p.code}"${p.spf ? ` data-spf="${p.spf}"` : ""}></div>`;
 
   return (
     <div className={s.shop}>
-      <header className={s.nav}>
-        <a href={`/store/${p.code}`} className={s.logo}>
-          Sunday <em>Pharmacy</em>
-        </a>
-        <nav className={s.navLinks} aria-label="Shop">
-          <span>Sun care</span>
-          <span>Face</span>
-          <span>Body</span>
-        </nav>
-        <span className={`${s.pill} ${s.pillAccent}`}>Store preview</span>
-      </header>
+      <ShopHeader catalogue={loadCatalogue()} active={shelf.id} />
 
       <main className={s.main}>
-        <p className={s.crumbs}>
-          Sun care <span aria-hidden>/</span> {KIND[p.kind] ?? "Sun care"}
-        </p>
+        <Crumbs items={[{ label: "Shop", href: "/store" }, { label: shelf.title, href: `/store#${shelf.id}` }, { label: p.name }]} />
         <div className={s.grid}>
           <div className={s.gallery}>
             <div className={s.photo}>
@@ -64,13 +51,11 @@ export default async function StorePage({ params }: Props) {
               {p.size ? <span className={`${s.pill} ${s.pillNeutral}`}>{p.size}</span> : null}
               <span className={`${s.pill} ${s.pillNeutral}`}>{KIND[p.kind]}</span>
             </div>
-            <p className={s.price}>Price set by the store</p>
+            <p className={s.price}>{c.price}</p>
 
-            <button type="button" className={s.cart} disabled aria-describedby="preview-note">
-              Add to cart
-            </button>
+            <AddToBag code={p.code} />
             <p id="preview-note" className={s.note}>
-              Preview only: this shop is made up, so nothing can be bought here.
+              {c.note}
             </p>
 
             <div className={s.widget}>
@@ -111,6 +96,8 @@ export default async function StorePage({ params }: Props) {
           </pre>
         </aside>
       </main>
+
+      <ShopFooter />
     </div>
   );
 }

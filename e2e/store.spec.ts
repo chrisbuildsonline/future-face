@@ -75,7 +75,7 @@ for (const [name, viewport] of [
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(product.name);
       await expect(page.getByText("Store preview", { exact: true })).toBeVisible();
       await expect(page.getByText("Price set by the store", { exact: true })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Add to cart" })).toBeDisabled();
+      await expect(page.locator("main").getByRole("button", { name: "Add to cart" })).toBeEnabled(); // fills the preview bag (store-links.spec)
       await expect(page.getByText(/€|\$\d/)).toHaveCount(0);
       const photo = page.getByRole("img", { name: productLabel(product) });
       await expect.poll(() => photo.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);

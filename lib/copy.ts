@@ -241,3 +241,26 @@ export const errors: Record<ErrorKind, string> = {
   no_key: "Live photos are turned off in this version of the app. The demo face still works.",
   unknown: "Something went wrong. Please try again, or use the demo face.",
 };
+
+// The Sunday Pharmacy store preview (app/store): a made-up shop that hosts the widget. No prices anywhere.
+export const store = {
+  badge: "Store preview",
+  all: "Shop all",
+  title: "Sun care for every",
+  titleAccent: "hour.",
+  lead: "Real products from Open Beauty Facts, shelved in routine order. Open any of them: the Future Face pill sits under Add to cart.",
+  addToCart: "Add to cart",
+  price: "Price set by the store",
+  note: "Preview only: this shop is made up, so nothing can be bought here.",
+  bag: "Bag",
+  bagTitle: "Your bag",
+  bagEmpty: "Nothing here yet. Add something from a product page.",
+  bagPreview: "Preview only, nothing is sold here.",
+  keepBrowsing: "Keep browsing",
+  remove: "Remove",
+  close: "Close",
+  woo: "This shop also runs as a real WooCommerce store",
+  wooUrl: "https://github.com/chrisbuildsonline/future-face#run-it-in-a-store-woocommerce-two-commands",
+  footer: "Sunday Pharmacy is a made-up shop that hosts the Future Face widget.",
+  home: "Future Face",
+} as const;
