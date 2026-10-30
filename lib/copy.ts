@@ -1,6 +1,8 @@
 // All on-screen copy for the landing page. Non-medical wording only:
 // lib/copy.test.ts fails the build of the suite if a banned stem slips in.
 
+import type { ErrorKind } from "./youcam";
+
 export const brand = {
   name: "Future Face",
   tagline: "Two faces of you at 45",
@@ -74,3 +76,22 @@ export const landing = {
     license: "MIT licensed",
   },
 } as const;
+
+// What the person sees when a photo or a request doesn't go through.
+export const errors: Record<ErrorKind, string> = {
+  no_face: "We couldn't find a face in that photo. Try a clear selfie where your face is easy to see.",
+  multiple_faces: "We spotted more than one person. Please use a photo with just your face in it.",
+  face_too_small: "Your face is a little small in that photo. Move closer or crop it so your face fills most of the photo's width.",
+  bad_pose: "Your face is turned, tilted or partly out of frame. Look straight at the camera with your whole face centered.",
+  bad_image_size: "That photo is too small or too large. Please use one at least 480 pixels on its shortest side.",
+  bad_format: "We couldn't open that photo. Please try a JPG or PNG.",
+  file_too_large: "That photo is over 10 MB. Please pick a smaller one.",
+  low_quality: "We couldn't get a clear look at your face. Try a well-lit photo, facing the camera.",
+  insufficient_units: "We've run out of renders on our side for now. The demo face is ready to try in the meantime.",
+  rate_limited: "Lots of people are trying this right now. Please try again in a minute.",
+  auth: "Something's off on our side, so live photos aren't working right now. The demo face still works.",
+  server_busy: "The imaging service hit a snag. Please try again.",
+  timeout: "That took longer than it should have. Please try again.",
+  no_key: "Live photos are turned off in this version of the app. The demo face still works.",
+  unknown: "Something went wrong. Please try again, or use the demo face.",
+};
