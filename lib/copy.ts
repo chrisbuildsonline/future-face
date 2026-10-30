@@ -1,11 +1,14 @@
 // All on-screen copy for the landing page. Non-medical wording only:
 // lib/copy.test.ts fails the build of the suite if a banned stem slips in.
 
+import { SPF_AGING_REDUCTION } from "./evidence";
 import type { ErrorKind } from "./youcam";
+
+const fewer = `${Math.round(SPF_AGING_REDUCTION * 100)}%`;
 
 export const brand = {
   name: "Future Face",
-  tagline: "Two faces of you at 45",
+  tagline: "Two faces of you in 30 years",
 } as const;
 
 export const disclaimer = "Every render is an illustrative projection, not a prognosis.";
@@ -17,7 +20,8 @@ export const landing = {
   },
   hero: {
     eyebrow: "Two futures, one selfie",
-    title: "Meet yourself at 45. Twice.",
+    // no-break space: "30 years" never splits across lines on a phone
+    title: "Meet yourself in 30 years. Twice.",
     titleAccent: "Twice.",
     lead: "One face kept living as now. The other wore sunscreen every day in your city. See them side by side, measured, with the routine that closes the gap.",
     cta: "See your two futures",
@@ -29,7 +33,7 @@ export const landing = {
     label: "Illustration of the two-future slider",
     leftTag: "As you live now",
     rightTag: "With daily SPF",
-    horizon: ["+10 yrs", "+20 yrs"],
+    horizon: ["+20 yrs", "+30 yrs"],
     uvTitle: "UV index",
     uvScale: ["Low", "Extreme"],
     uvNote: "Your city's sun sets the scene",
@@ -43,14 +47,14 @@ export const landing = {
       {
         n: "01",
         api: "AI Aging Generator",
-        title: "Ten and twenty years on",
+        title: "Twenty and thirty years on",
         body: "The selfie is projected forward as you live now, with the UV index of your city in the frame.",
       },
       {
         n: "02",
         api: "AI Skin Simulation",
-        title: "The same frame, with daily SPF",
-        body: "Spots, wrinkles and texture are dialled to the effect sizes reported for daily sunscreen users.",
+        title: "An earlier frame, with daily SPF",
+        body: `The SPF face is the aging frame ${fewer} fewer years ahead, after the trial below. Skin Simulation adds a light finishing pass.`,
       },
       {
         n: "03",
@@ -83,9 +87,10 @@ export const landing = {
 export const result = {
   nav: { back: "Back", own: "Try your own selfie" },
   eyebrow: { demo: "Demo face", live: "Your selfie" },
-  titlePrefix: "You at",
+  titlePrefix: "You in",
+  titleYears: "years.",
   titleAccent: "Twice.",
-  lead: "Left, the face as you live now. Right, the same frame with daily SPF. Drag the divider to compare.",
+  lead: "Left, the face as you live now. Right, the face with daily SPF. Drag the divider to compare.",
   horizonLabel: "Years ahead",
   today: "Age read today",
   slider: {
@@ -95,9 +100,10 @@ export const result = {
   },
   disclaimer: "Illustrative projection, not a prognosis.",
   frame: {
-    picked: "Aging Generator frame: picked res_age",
-    forTarget: "for target",
-    nearest: "The generator returns preset ages, so we use the nearest one.",
+    age: "Frame age",
+    target: "Target age",
+    nearest: "The Aging Generator returns preset ages, so each face uses the nearest frame.",
+    method: `The SPF face is the aging frame ${fewer} fewer years ahead, because the trial found ${fewer} less skin aging with daily sunscreen. The trial measured skin texture, not years, so read this as an illustration.`,
   },
   measured: {
     eyebrow: "Read by AI Skin Analysis",
@@ -106,6 +112,7 @@ export const result = {
     foot: "Each number is the model's own reading of that render (Skin Analysis raw_score, 0 to 100), not a reading of you.",
     labels: { wrinkle: "Wrinkles", texture: "Texture", spots: "Spots" } as Record<string, string>,
     order: ["wrinkle", "texture", "spots"],
+    sameFrame: "At this horizon both faces come from the same aging frame, so there is no gap to measure.",
     intensity: "SPF intensity",
     source: "Source",
   },
@@ -113,14 +120,14 @@ export const result = {
     eyebrow: "Why this intensity",
     stat: "24%",
     statLabel: "less skin aging with daily sunscreen",
-    how: "The SPF render dials spots, wrinkles and texture by this amount on the model's 0 to 1 scale.",
+    how: `The SPF face is the aging frame ${fewer} fewer years ahead. Skin Simulation then gives it a finishing pass at this amount on spots, wrinkles and texture, on the model's 0 to 1 scale.`,
     doiLabel: "doi",
     link: "Read the trial",
   },
   closeup: {
     eyebrow: "Up close",
     title: "Under the eye, both ways.",
-    lead: "The change is quiet at this intensity. Same crop, same zoom, so the difference is the only difference.",
+    lead: "Same crop, same zoom on both faces, so the difference is the only difference.",
   },
   uv: {
     eyebrow: "UV today",
@@ -207,7 +214,7 @@ export const embed = {
   eyebrow: "On your own face",
   title: "Try this SPF on your face.",
   titleAccent: "your face.",
-  lead: "A selfie and your city. See yourself twenty years on, as you live now and with this SPF every morning.",
+  lead: "A selfie and your city. See yourself in 30 years, as you live now and with this SPF every morning.",
   fallback: "Or see it on our demo face",
   fallbackNote: "A recorded run on a face that does not exist. Nothing to upload.",
 } as const;

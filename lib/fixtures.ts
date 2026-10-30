@@ -5,7 +5,15 @@ import type { SkinAnalysis } from "./youcam";
 // Reads the recorded demo set: no network, no key.
 
 type Arm = { image: string; analysis: SkinAnalysis };
-export type Horizon = { years: 10 | 20; targetAge: number; resAge: number; now: Arm; spf: Arm };
+export type Horizon = {
+  years: 20 | 30;
+  targetAge: number;
+  resAge: number;
+  spfResAge: number;
+  sameFrame?: true;
+  now: Arm;
+  spf: Arm;
+};
 export type Demo = {
   recordedAt: string;
   source: string;

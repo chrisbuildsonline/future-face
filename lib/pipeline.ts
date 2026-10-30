@@ -1,13 +1,21 @@
 import sharp from "sharp";
-import { CITATION, INTENSITIES, SPF_SETTINGS } from "./evidence";
+import { CITATION, INTENSITIES, SPF_AGING_REDUCTION, SPF_SETTINGS } from "./evidence";
 import { loadDemo } from "./fixtures";
 import { cropToCenter, prepareForAging, prepareForSimulation } from "./image";
 import { recordedUv, type Uv } from "./uv";
 import { ageFace, analyzeSkin, downloadFrame, pickNearest, simulateSkin, YoucamError } from "./youcam";
-import type { Opts, SkinAnalysis } from "./youcam";
+import type { AgingFrame, Opts, SkinAnalysis } from "./youcam";
 
-const HORIZONS = [10, 20];
+export const HORIZONS = [20, 30];
 const ACTIONS = ["wrinkle", "age_spot", "texture"];
+
+/** The two arms' frames: now = nearest inputAge + years; spf = nearest inputAge + years * (1 - SPF_AGING_REDUCTION). */
+export function pickArmFrames(frames: AgingFrame[], inputAge: number, years: number) {
+  return {
+    now: pickNearest(frames, inputAge, years),
+    spf: pickNearest(frames, inputAge, years * (1 - SPF_AGING_REDUCTION)),
+  };
+}
 
 /** Centre-crop fractions tried, in order, after YouCam says face_too_small. At most one retry per entry. */
 export const CROP_LADDER = [0.75, 0.55];
@@ -42,6 +50,8 @@ export type FutureResult = {
     years: number;
     targetAge: number;
     resAge: number;
+    spfResAge: number;
+    sameFrame?: true;
     now: { image: string; skinAge?: number };
     spf: { image: string; skinAge?: number };
     measured: Measured[];
@@ -77,9 +87,11 @@ export function demoResult(uv: Uv | null = recordedUv()): FutureResult {
       years: h.years,
       targetAge: h.targetAge,
       resAge: h.resAge,
+      spfResAge: h.spfResAge,
+      ...(h.sameFrame ? { sameFrame: true as const } : {}),
       now: { image: imageUrl(h.now.image), ...(h.now.analysis.skinAge ? { skinAge: h.now.analysis.skinAge } : {}) },
       spf: { image: imageUrl(h.spf.image), ...(h.spf.analysis.skinAge ? { skinAge: h.spf.analysis.skinAge } : {}) },
-      measured: measuredLine(h.now.analysis, h.spf.analysis),
+      measured: h.sameFrame ? [] : measuredLine(h.now.analysis, h.spf.analysis),
     })),
     settings: SPF_SETTINGS,
     citation: CITATION,
@@ -105,26 +117,32 @@ export async function runLive(
 
   const horizons = await Promise.all(
     HORIZONS.map(async (years) => {
-      const frame = pickNearest(aged.frames, inputAge, years);
-      if (!frame) throw new YoucamError("no_frame", "unknown");
-      const raw = await deps.downloadFrame(frame.url, opts);
-      // No crop first: the raw frame already holds the whole head. Crop in only if the face is too small.
-      const { now, sim } = await withCropLadder(raw, prepareForSimulation, async (now) => ({
-        now,
-        sim: await deps.simulateSkin(now, SPF_SETTINGS, opts),
-      }));
-      const spf = await sharp(sim).jpeg({ quality: 92 }).toBuffer(); // the API returns png
-      const [nowA, spfA] = await Promise.all([
-        deps.analyzeSkin(now, { ...opts, actions: ACTIONS }),
-        deps.analyzeSkin(spf, { ...opts, actions: ACTIONS }),
+      const { now: nowFrame, spf: spfFrame } = pickArmFrames(aged.frames, inputAge, years);
+      if (!nowFrame || !spfFrame) throw new YoucamError("no_frame", "unknown");
+      const sameFrame = nowFrame.resAge === spfFrame.resAge;
+      const [nowRaw, spfRaw] = await Promise.all([
+        deps.downloadFrame(nowFrame.url, opts),
+        deps.downloadFrame(spfFrame.url, opts),
       ]);
+      // No crop first: the raw frame already holds the whole head. Crop in only if the face is too small.
+      const nowArm = await withCropLadder(nowRaw, prepareForSimulation, async (img) => ({
+        img,
+        a: await deps.analyzeSkin(img, { ...opts, actions: ACTIONS }),
+      }));
+      const spfArm = await withCropLadder(spfRaw, prepareForSimulation, async (base) => {
+        const sim = await deps.simulateSkin(base, SPF_SETTINGS, opts);
+        const img = await sharp(sim).jpeg({ quality: 92 }).toBuffer(); // the API returns png
+        return { img, a: await deps.analyzeSkin(img, { ...opts, actions: ACTIONS }) };
+      });
       return {
         years,
         targetAge: inputAge + years,
-        resAge: frame.resAge,
-        now: { image: dataUrl(now), ...(nowA.skinAge ? { skinAge: nowA.skinAge } : {}) },
-        spf: { image: dataUrl(spf), ...(spfA.skinAge ? { skinAge: spfA.skinAge } : {}) },
-        measured: measuredLine(nowA, spfA),
+        resAge: nowFrame.resAge,
+        spfResAge: spfFrame.resAge,
+        ...(sameFrame ? { sameFrame: true as const } : {}),
+        now: { image: dataUrl(nowArm.img), ...(nowArm.a.skinAge ? { skinAge: nowArm.a.skinAge } : {}) },
+        spf: { image: dataUrl(spfArm.img), ...(spfArm.a.skinAge ? { skinAge: spfArm.a.skinAge } : {}) },
+        measured: sameFrame ? [] : measuredLine(nowArm.a, spfArm.a),
       };
     }),
   );

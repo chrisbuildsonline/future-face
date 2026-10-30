@@ -1,9 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { CITATION, INTENSITIES, SPF_SETTINGS } from "./evidence";
+import { CITATION, INTENSITIES, SPF_AGING_REDUCTION, SPF_SETTINGS } from "./evidence";
 
 describe("evidence", () => {
   test("SPF settings values", () => {
     expect(SPF_SETTINGS).toEqual({ spots: 0.24, wrinkle: 0.24, texture: 0.24 });
+  });
+
+  test("SPF arm ages 24% less, from the trial", () => {
+    expect(SPF_AGING_REDUCTION).toBe(0.24);
+    expect(CITATION.finding).toContain("24% less aging");
   });
 
   test("every intensity is in 0..1, matches SPF_SETTINGS and carries the citation", () => {

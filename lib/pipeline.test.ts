@@ -10,15 +10,16 @@ const an = (c: Record<string, number>, skinAge?: number): SkinAnalysis => ({
 });
 
 describe("measuredLine", () => {
-  test("recorded +10 numbers", () => {
-    const d = loadDemo().horizons[0];
+  test("recorded +30 numbers", () => {
+    const d = loadDemo().horizons[1];
     const line = measuredLine(d.now.analysis, d.spf.analysis);
     expect(line.map((l) => l.key)).toEqual(["spots", "wrinkle", "texture"]);
     const w = line.find((l) => l.key === "wrinkle")!;
+    const r1 = (n: number) => Math.round(n * 10) / 10;
     expect(w.analysisKey).toBe("wrinkle");
-    expect(w.now).toBe(75.7);
-    expect(w.spf).toBe(82);
-    expect(w.delta).toBe(6.4);
+    expect(w.now).toBe(r1(d.now.analysis.concerns.wrinkle.raw_score));
+    expect(w.spf).toBe(r1(d.spf.analysis.concerns.wrinkle.raw_score));
+    expect(w.delta).toBe(r1(w.spf - w.now));
   });
   test("skips a concern missing from either side", () => {
     const line = measuredLine(an({ wrinkle: 70, texture: 80 }), an({ wrinkle: 75, age_spot: 90 }));
@@ -39,8 +40,14 @@ describe("demoResult", () => {
         expect(url.startsWith("/api/demo-image/")).toBe(true);
         expect(() => demoImagePath(url.slice("/api/demo-image/".length))).not.toThrow();
       }
-      expect(h.measured.length).toBeGreaterThan(0);
+      expect(typeof h.spfResAge).toBe("number");
+      if (h.sameFrame) expect(h.measured).toEqual([]);
+      else {
+        expect(h.spfResAge).toBeLessThan(h.resAge);
+        expect(h.measured.length).toBeGreaterThan(0);
+      }
     }
+    expect(r.horizons.map((h) => h.years)).toEqual([20, 30]);
   });
   test("uses a caller-supplied uv", () => {
     expect(demoResult(null).uv).toBeNull();
@@ -48,11 +55,8 @@ describe("demoResult", () => {
 });
 
 describe("runLive", () => {
-  const frames = [
-    { resAge: 30, url: "u30" },
-    { resAge: 40, url: "u40" },
-    { resAge: 50, url: "u50" },
-  ];
+  // input 30: +20 -> now 50 / spf nearest 45.2 = 45; +30 -> now 60 / spf nearest 52.8 = 55
+  const frames = [30, 35, 40, 45, 50, 55, 60].map((resAge) => ({ resAge, url: `u${resAge}` }));
   const mk = async (w = 1020, h = 1020) =>
     sharp({ create: { width: w, height: h, channels: 3, background: "#888" } }).jpeg().toBuffer();
   const png = () => sharp({ create: { width: 600, height: 600, channels: 3, background: "#777" } }).png().toBuffer();
@@ -81,11 +85,11 @@ describe("runLive", () => {
     const r = await runLive(await mk(800, 800), d);
     expect(r.source).toBe("live");
     expect(r.inputAge).toBe(30);
-    expect(r.frames).toEqual([30, 40, 50]);
-    expect(log.downloads.sort()).toEqual(["u40", "u50"]);
-    expect(r.horizons.map((h) => [h.years, h.targetAge, h.resAge])).toEqual([
-      [10, 40, 40],
-      [20, 50, 50],
+    expect(r.frames).toEqual([30, 35, 40, 45, 50, 55, 60]);
+    expect(log.downloads.sort()).toEqual(["u45", "u50", "u55", "u60"]);
+    expect(r.horizons.map((h) => [h.years, h.targetAge, h.resAge, h.spfResAge, h.sameFrame])).toEqual([
+      [20, 50, 50, 45, undefined],
+      [30, 60, 60, 55, undefined],
     ]);
     for (const h of r.horizons) {
       expect(h.spf.image.startsWith("data:image/jpeg;base64,")).toBe(true);
@@ -97,6 +101,39 @@ describe("runLive", () => {
       expect(h.now.skinAge).toBe(40);
     }
     expect(r.input?.startsWith("data:image/jpeg;base64,")).toBe(true);
+  });
+
+  test("the SPF arm is a different, younger frame and simulation runs on it", async () => {
+    const sizes: Record<string, number> = { u45: 900, u50: 1000, u55: 1100, u60: 1200 }; // distinct size per frame
+    const simulated: string[] = [];
+    const { d, log } = deps({
+      downloadFrame: async (url: string) => {
+        log.downloads.push(url);
+        return mk(sizes[url], sizes[url]);
+      },
+      simulateSkin: async (bytes: Uint8Array) => {
+        const w = (await sharp(bytes).metadata()).width!;
+        simulated.push(Object.keys(sizes).find((u) => sizes[u] === w)!);
+        return png();
+      },
+    });
+    const r = await runLive(await mk(800, 800), d);
+    expect(log.downloads.sort()).toEqual(["u45", "u50", "u55", "u60"]);
+    expect(simulated.sort()).toEqual(["u45", "u55"]); // only the SPF frames, never the now frames
+    expect(r.horizons.every((h) => h.spfResAge < h.resAge)).toBe(true);
+  });
+
+  test("same frame for both arms: sameFrame true, measured [], simulation still runs", async () => {
+    const two = [30, 50].map((resAge) => ({ resAge, url: `u${resAge}` }));
+    const { d, log } = deps({ ageFace: async () => ({ inputAge: 30, frames: two }) });
+    const r = await runLive(await mk(800, 800), d);
+    for (const h of r.horizons) {
+      expect(h.sameFrame).toBe(true);
+      expect(h.measured).toEqual([]);
+      expect(h.resAge).toBe(50);
+      expect(h.spfResAge).toBe(50);
+    }
+    expect(log.sim).toBe(2);
   });
 
   const settle = () => new Promise((r) => setTimeout(r, 100));

@@ -8,10 +8,12 @@ describe("recorded demo fixtures", () => {
     expect(typeof d.recordedAt).toBe("string");
     expect(typeof d.inputAge).toBe("number");
     expect(d.frames.length).toBeGreaterThan(0);
-    expect(d.horizons.map((h) => h.years)).toEqual([10, 20]);
+    expect(d.horizons.map((h) => h.years)).toEqual([20, 30]);
     for (const h of d.horizons) {
       expect(typeof h.resAge).toBe("number");
       expect(d.frames).toContain(h.resAge);
+      expect(d.frames).toContain(h.spfResAge);
+      expect(h.spfResAge).toBeLessThanOrEqual(h.resAge);
       for (const arm of [h.now, h.spf]) {
         for (const k of ["wrinkle", "age_spot", "texture"]) {
           expect(typeof arm.analysis.concerns[k].raw_score).toBe("number");
@@ -30,7 +32,7 @@ describe("recorded demo fixtures", () => {
   });
 
   test("demoImagePath rejects names not in result.json", () => {
-    for (const bad of ["../.env", "../../.env", "/etc/passwd", "aged-10-raw.jpg", "result.json", ""]) {
+    for (const bad of ["../.env", "../../.env", "/etc/passwd", "aged-30-now-raw.jpg", "result.json", ""]) {
       expect(() => demoImagePath(bad)).toThrow();
     }
   });

@@ -9,6 +9,9 @@ export const CITATION = {
     "Daily sunscreen users showed no detectable increase in skin aging after 4.5 years and 24% less aging than discretionary users.",
 };
 
+/** Share of aging avoided with daily sunscreen (Hughes 2013: 24% less aging). The SPF arm shows the face at years * (1 - this). */
+export const SPF_AGING_REDUCTION = 0.24;
+
 const basis = "24% less skin aging with daily sunscreen vs discretionary use (Hughes 2013)";
 
 export const INTENSITIES = [

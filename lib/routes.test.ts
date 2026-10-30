@@ -139,7 +139,7 @@ describe("GET /api/demo-image/[name]", () => {
     demoImage(new Request("http://x"), { params: Promise.resolve({ name }) });
 
   test("serves an allowlisted jpeg", async () => {
-    const res = await get("now-10.jpg");
+    const res = await get("now-30.jpg");
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/jpeg");
     expect(res.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
