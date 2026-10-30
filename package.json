@@ -14,6 +14,7 @@
     "record": "bun scripts/record.ts",
     "record:uv": "bun scripts/record-uv.ts",
     "products": "bun scripts/fetch-products.ts",
+    "live:crop": "bun scripts/live-crop.ts",
     "e2e": "playwright test",
     "e2e:fresh": "E2E_PORT=3123 playwright test",
     "typecheck": "tsc --noEmit",
