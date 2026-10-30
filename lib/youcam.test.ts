@@ -187,6 +187,30 @@ describe("skin analysis", () => {
     expect(polls).toBe(2);
   });
 
+  test("actions option sets dst_actions; unknown actions are rejected before any call", async () => {
+    const zip = buildZip({ "skinanalysisResult/score_info.json": Buffer.from(JSON.stringify({ skin_age: 41 })) });
+    const { f, calls } = mockFetch((c) => {
+      if (c.url.endsWith("/file")) return registerReply();
+      if (c.url === UPLOAD) return new Response(null);
+      if (c.method === "POST") return json({ status: 200, data: { task_id: "T" } });
+      if (c.url.endsWith("/T"))
+        return json({ status: 200, data: { task_status: "success", results: "https://dl.example.com/z" } });
+      return new Response(new Uint8Array(zip));
+    });
+    const img = await jpg(600, 800);
+    await analyzeSkin(img, { fetch: f, ...fast, actions: ["wrinkle", "age_spot", "texture"] });
+    expect((calls[2].body as any).dst_actions).toEqual(["wrinkle", "age_spot", "texture"]);
+
+    const before = calls.length;
+    for (const bad of [["bogus"], ["wrinkle", "hd_wrinkle"]]) {
+      const err = await analyzeSkin(img, { fetch: f, ...fast, actions: bad }).catch((e) => e);
+      expect(err).toBeInstanceOf(YoucamError);
+      expect(err.code).toBe("invalid_settings");
+      expect(err.kind).toBe("unknown");
+    }
+    expect(calls.length).toBe(before);
+  });
+
   test("zip result given directly as a string url also works", async () => {
     const zip = buildZip({ "skinanalysisResult/score_info.json": Buffer.from(JSON.stringify({ skin_age: 41 })) });
     const { f } = mockFetch((c) => {

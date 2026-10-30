@@ -185,8 +185,11 @@ const SD_ACTIONS = [
 export type Concern = { raw_score: number; ui_score?: number };
 export type SkinAnalysis = { concerns: Record<string, Concern>; skinAge?: number; overall?: number };
 
-export async function analyzeSkin(bytes: Uint8Array, opts: Opts = {}): Promise<SkinAnalysis> {
-  const results = await runTask("skin-analysis", bytes, { dst_actions: SD_ACTIONS, format: "zip" }, opts);
+/** `actions` picks a subset of SD_ACTIONS (cheaper); default is all 16. */
+export async function analyzeSkin(bytes: Uint8Array, opts: Opts & { actions?: string[] } = {}): Promise<SkinAnalysis> {
+  const actions = opts.actions ?? SD_ACTIONS;
+  if (!actions.length || !actions.every((a) => SD_ACTIONS.includes(a))) throw new YoucamError("invalid_settings", "unknown");
+  const results = await runTask("skin-analysis", bytes, { dst_actions: actions, format: "zip" }, opts);
   // Docs show both results.url and results as a bare string.
   const url = typeof results === "string" ? results : results?.url;
   if (!url) return fail("unknown");
