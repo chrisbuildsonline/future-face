@@ -1,0 +1,821 @@
+/* The SPF routine + bag (DESIGN.md 3c). Tokens: app/globals.css */
+
+/* ---------- atoms ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  width: fit-content;
+}
+.pillNeutral {
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-fg);
+}
+.pillAccent {
+  background: var(--pill-accent-bg);
+  color: var(--pill-accent-fg);
+}
+.pillGood {
+  background: var(--pill-good-bg);
+  color: var(--pill-good-fg);
+}
+.pillWatch {
+  background: var(--pill-watch-bg);
+  color: var(--pill-watch-fg);
+}
+.pillGood::before,
+.pillWatch::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* the primary pill (one per view): near-black, label left, white circle with an arrow right */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  height: 56px;
+  padding: 0 8px 0 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-body);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 14px 30px -14px color-mix(in srgb, var(--ink) 55%, transparent);
+  transition: background var(--d-hover) var(--ease), transform var(--d-hover) var(--ease), opacity var(--d-state) var(--ease);
+}
+.cta:hover {
+  background: var(--ink-hover);
+}
+.cta:active {
+  transform: scale(0.98);
+}
+.cta:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.ctaIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  transition: transform var(--d-hover) var(--ease);
+}
+.cta:hover:not(:disabled) .ctaIcon {
+  transform: translateX(3px);
+}
+.ctaBlock {
+  width: 100%;
+}
+.ctaCompact {
+  height: 48px;
+  padding-left: 20px;
+  gap: 12px;
+  font-size: 15px;
+}
+.ctaCompact .ctaIcon {
+  width: 34px;
+  height: 34px;
+}
+
+/* ---------- section ---------- */
+.routine {
+  width: 100%;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  scroll-margin-top: 16px;
+  animation: rise var(--d-enter) var(--ease) both;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px 48px;
+  padding-top: 48px;
+  border-top: 1px solid var(--hairline);
+}
+
+.headCopy {
+  display: grid;
+  gap: 20px;
+  justify-items: start;
+  min-width: 0;
+  flex: 1 1 520px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--t-h2);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 24px;
+}
+.title:focus {
+  outline: none;
+}
+.title em {
+  font-style: italic;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.lead {
+  font-size: var(--t-lead);
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 50ch;
+}
+.lead b {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.facts {
+  display: flex;
+  margin: 0;
+  padding: 8px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.fact {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  width: 132px;
+  padding: 14px 16px 12px;
+}
+.fact + .fact {
+  border-left: 1px solid var(--hairline);
+}
+.fact dt {
+  order: 2;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 550;
+  color: var(--ink-2);
+}
+.fact dd {
+  order: 1;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 48px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: lining-nums;
+  white-space: nowrap;
+}
+.fact:first-child dd {
+  color: var(--accent);
+}
+
+/* ---------- layout: steps + bag rail ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 16px 20px;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+  transition: box-shadow var(--d-state) var(--ease), transform var(--d-state) var(--ease);
+}
+.step[data-selected] {
+  box-shadow: var(--shadow-card), 0 0 0 2px var(--accent-soft);
+}
+
+.stepHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 0;
+}
+.stepNum {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--ink-3);
+  font-variant-numeric: lining-nums;
+}
+.stepLabel {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+}
+.stepSpf {
+  margin-left: auto;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1.02;
+  border-radius: var(--r-inner);
+  background:
+    radial-gradient(60% 55% at 50% 46%, var(--accent-glow), transparent 72%),
+    var(--surface-sunk);
+  overflow: hidden;
+}
+.tile::after {
+  /* a soft horizon line the package stands on */
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 22%;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--canvas-deep) 60%, transparent));
+  pointer-events: none;
+}
+
+.art {
+  position: relative;
+  z-index: 1;
+  width: 72%;
+  height: auto;
+  display: block;
+  transition: transform var(--d-state) var(--ease);
+}
+.step:hover .art {
+  transform: translateY(-4px);
+}
+.artSmall {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gBodyA {
+  stop-color: var(--surface);
+}
+.gBodyB {
+  stop-color: var(--surface);
+}
+.gBodyC {
+  stop-color: var(--canvas-deep);
+}
+.gCapA {
+  stop-color: var(--ink-hover);
+}
+.gCapB {
+  stop-color: var(--ink-2);
+}
+.gCapC {
+  stop-color: var(--ink);
+}
+.gGlowA {
+  stop-color: var(--accent-glow);
+}
+.gGlowB {
+  stop-color: var(--accent);
+}
+.artLine {
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+.artShade {
+  fill: var(--canvas-deep);
+}
+.artFloor {
+  fill: var(--canvas-deep);
+}
+.artLabel {
+  fill: var(--accent-soft);
+}
+.artSun {
+  fill: var(--accent);
+}
+.artMist {
+  fill: var(--accent-glow);
+}
+.artMirror {
+  fill: var(--canvas-deep);
+}
+.artSheen {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+.artCapLine {
+  fill: var(--ink-2);
+  opacity: 0.5;
+}
+.artText,
+.artTextBig {
+  fill: var(--accent);
+  font-family: var(--font-sans);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+.artText {
+  font-size: 9px;
+}
+.artTextBig {
+  font-size: 13px;
+}
+
+.info {
+  display: grid;
+  gap: 4px;
+  padding: 0 4px;
+}
+.name {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+.size {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink-2);
+}
+.size::first-letter {
+  text-transform: uppercase;
+}
+
+.why {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  padding: 12px 4px 0;
+  border-top: 1px solid var(--hairline);
+  font-size: var(--t-small);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.whyLabel {
+  font-size: var(--t-micro);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.buy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 0 4px;
+}
+.price {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: lining-nums;
+}
+
+.add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background var(--d-hover) var(--ease), box-shadow var(--d-hover) var(--ease), transform var(--d-hover) var(--ease);
+}
+.add:hover {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1.5px transparent;
+}
+.add:active {
+  transform: scale(0.96);
+}
+/* selected = the accent tint with a check (DESIGN.md 3c) */
+.add[aria-pressed="true"] {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1.5px transparent;
+}
+
+/* ---------- bag (rail card on desktop, sheet on phone) ---------- */
+.bag {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+}
+
+.bagHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bagTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.bagItems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.bagItem {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  animation: rise var(--d-state) var(--ease) both;
+}
+.bagItem + .bagItem {
+  border-top: 1px solid var(--hairline);
+}
+.bagThumb {
+  width: 52px;
+  height: 52px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-sunk);
+}
+.bagItemText {
+  display: grid;
+  min-width: 0;
+}
+.bagItemName {
+  font-size: var(--t-small);
+  font-weight: 650;
+  line-height: 1.3;
+}
+.bagItemSize {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.bagItemPrice {
+  font-size: 15px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.bagEmpty {
+  padding: 18px;
+  border-radius: var(--r-inner);
+  background: var(--surface-sunk);
+  font-size: var(--t-small);
+  color: var(--ink-2);
+}
+
+.totals {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+.totalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--t-small);
+  color: var(--ink-2);
+}
+.totalRow dd {
+  margin: 0;
+}
+.subtotal {
+  color: var(--ink);
+  font-weight: 650;
+}
+.subtotal dd {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums;
+}
+
+.note:empty {
+  display: none;
+}
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-inner);
+  background: var(--surface-sunk);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  animation: rise var(--d-state) var(--ease) both;
+}
+.noteDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.fiction {
+  font-size: 12px;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+/* the phone bar and sheet are hidden on desktop */
+.bar {
+  display: none;
+}
+
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 88dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-float);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.sheet[open] {
+  animation: sheetUp var(--d-state) var(--ease) both;
+}
+.sheet::backdrop {
+  background: color-mix(in srgb, var(--ink) 34%, transparent);
+}
+.sheetInner {
+  display: grid;
+  gap: 18px;
+  padding: 10px var(--card-pad) calc(24px + env(safe-area-inset-bottom));
+}
+.sheetTop {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  min-height: 44px;
+}
+.grabber {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 40px;
+  height: 4px;
+  transform: translateX(-50%);
+  border-radius: var(--r-pill);
+  background: var(--canvas-deep);
+}
+.close {
+  height: 36px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: 650;
+  cursor: pointer;
+  position: relative;
+}
+.close::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ---------- tablet ---------- */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bag {
+    position: static;
+  }
+}
+
+/* ---------- phone: one job, add ---------- */
+@media (max-width: 720px) {
+  .routine {
+    padding-top: 24px;
+    gap: 24px;
+  }
+  .head {
+    padding-top: 32px;
+    gap: 20px;
+  }
+  .headCopy {
+    flex-basis: 100%;
+    gap: 14px;
+  }
+  .facts {
+    width: 100%;
+    padding: 4px;
+  }
+  .fact {
+    flex: 1;
+    width: auto;
+    padding: 12px 12px 10px;
+  }
+  .fact dd {
+    font-size: 36px;
+  }
+  .fact dt {
+    font-size: 12px;
+  }
+
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    grid-template-areas:
+      "head head"
+      "tile info"
+      "why why"
+      "buy buy";
+    gap: 14px 16px;
+    padding: 16px;
+  }
+  .stepHead {
+    grid-area: head;
+    padding: 0;
+  }
+  .tile {
+    grid-area: tile;
+    aspect-ratio: 1;
+  }
+  .info {
+    grid-area: info;
+    align-content: center;
+    padding: 0;
+  }
+  .name {
+    font-size: 24px;
+  }
+  .why {
+    grid-area: why;
+    padding: 12px 0 0;
+  }
+  .buy {
+    grid-area: buy;
+    padding: 0;
+  }
+  .price {
+    font-size: 30px;
+  }
+  .add {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .add svg {
+    width: 16px;
+    height: 16px;
+  }
+  .addText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .bag {
+    display: none;
+  }
+  .bar {
+    position: sticky;
+    bottom: 12px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 6px 6px 20px;
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    box-shadow: var(--shadow-float), 0 0 0 1px var(--hairline);
+  }
+  .barSummary {
+    font-size: 15px;
+    font-weight: 550;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .barSummary b {
+    font-weight: 700;
+    color: var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routine,
+  .bagItem,
+  .note,
+  .sheet[open] {
+    animation: none;
+  }
+}
