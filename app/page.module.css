@@ -90,6 +90,32 @@
   color: var(--accent);
 }
 
+.navCta {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: #fff;
+  font-size: var(--t-small);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--d-hover) var(--ease);
+}
+
+.navCta:hover {
+  background: var(--ink-hover);
+}
+
+/* the result route: same frame as the landing sections */
+.page {
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 32px var(--gutter) 0;
+}
+
 /* ---------- hero ---------- */
 .hero {
   max-width: calc(var(--max) + 2 * var(--gutter));
@@ -245,6 +271,11 @@
   line-height: 1;
   letter-spacing: -0.015em;
   max-width: 16ch;
+}
+
+.h2 em {
+  font-style: italic;
+  color: var(--accent);
 }
 
 .steps {
@@ -412,8 +443,15 @@
   .wordmark {
     font-size: 24px;
   }
-  .navBadge {
+  .navBadge,
+  .navBack {
     display: none;
+  }
+  .navCta {
+    padding: 0 16px;
+  }
+  .page {
+    padding-top: 12px;
   }
 
   .hero {

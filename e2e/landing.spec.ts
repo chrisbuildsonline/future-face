@@ -19,7 +19,7 @@ for (const vp of viewports) {
   test.describe(`landing at ${vp.width}x${vp.height}`, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
 
-    test("shows the title and primary action, and the action brings #how into view", async ({ page }) => {
+    test("shows the title and primary action, and the action opens the demo result", async ({ page }) => {
       const errors = collectErrors(page);
       await page.goto("/");
 
@@ -44,11 +44,9 @@ for (const vp of viewports) {
       );
       expect(overflow).toBe(0);
 
-      const how = page.locator("#how");
-      await expect(how).not.toBeInViewport();
       await cta.click();
-      await expect(how).toBeInViewport();
-      await expect(page).toHaveURL(/#how$/);
+      await expect(page).toHaveURL(/\/result$/);
+      await expect(page.getByTestId("face-spf")).toBeVisible();
 
       expect(errors).toEqual([]);
     });

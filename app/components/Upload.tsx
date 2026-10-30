@@ -1,0 +1,169 @@
+"use client";
+
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { errors, upload as c } from "@/lib/copy";
+import type { FutureResult } from "@/lib/pipeline";
+import { Result } from "./Result";
+import s from "./Upload.module.css";
+
+type State =
+  | { kind: "idle" }
+  | { kind: "loading"; started: number }
+  | { kind: "error"; message: string }
+  | { kind: "done"; data: FutureResult };
+
+function Arrow() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+      <path d="M3 9h11M10 4.5 14.5 9 10 13.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Loading({ started }: { started: number }) {
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      setSecs(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => {
+      window.clearInterval(t);
+    };
+  }, [started]);
+  return (
+    <div className={s.loading} role="status">
+      <span className={s.sun} aria-hidden />
+      <p className={s.loadingTitle}>{c.loadingTitle}</p>
+      <p className={s.loadingBody}>{c.loading}</p>
+      <span className={s.elapsed}>
+        {secs}s {c.elapsed}
+      </span>
+    </div>
+  );
+}
+
+export function Upload() {
+  const uid = useId();
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [city, setCity] = useState("");
+  const [state, setState] = useState<State>({ kind: "idle" });
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [file]);
+
+  useEffect(() => {
+    if (state.kind === "done") {
+      resultRef.current?.scrollIntoView({ block: "start" });
+    }
+  }, [state.kind]);
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!file || !city.trim()) return;
+    setState({ kind: "loading", started: Date.now() });
+    const body = new FormData();
+    body.set("selfie", file);
+    body.set("city", city.trim());
+    try {
+      const res = await fetch("/api/future", { method: "POST", body });
+      const json = await res.json().catch(() => null);
+      if (res.ok && Array.isArray(json?.horizons)) setState({ kind: "done", data: json });
+      else setState({ kind: "error", message: json?.error?.message ?? errors.unknown });
+    } catch {
+      setState({ kind: "error", message: errors.unknown });
+    }
+  }
+
+  if (state.kind === "done") {
+    return (
+      <div ref={resultRef} className={s.done}>
+        <Result data={state.data} titleTag="h2" />
+        <button type="button" className={s.secondary} onClick={() => setState({ kind: "idle" })}>
+          {c.fileChange}
+        </button>
+      </div>
+    );
+  }
+
+  const busy = state.kind === "loading";
+  const fileId = `${uid}-file`;
+  const hintId = `${uid}-hint`;
+  return (
+    <form className={s.card} onSubmit={submit} aria-busy={busy}>
+      <input
+        id={fileId}
+        className={s.fileInput}
+        type="file"
+        accept="image/jpeg,image/png"
+        aria-describedby={hintId}
+        disabled={busy}
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+      />
+      <label
+        htmlFor={fileId}
+        className={s.drop}
+        data-filled={preview ? "" : undefined}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          const f = e.dataTransfer.files[0];
+          if (f) setFile(f);
+        }}
+      >
+        {preview ? <img src={preview} alt="" className={s.preview} /> : <span className={s.plus} aria-hidden />}
+        <span className={s.dropTitle}>{file ? c.fileChange : c.file}</span>
+        <span id={hintId} className={s.dropHint}>
+          {file ? file.name : c.fileHint}
+        </span>
+      </label>
+
+      <div className={s.side}>
+        {busy ? (
+          <Loading started={state.started} />
+        ) : (
+          <>
+            <label className={s.field}>
+              <span className={s.fieldLabel}>{c.city}</span>
+              <input
+                className={s.input}
+                list={`${uid}-cities`}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder={c.cityPlaceholder}
+                autoComplete="address-level2"
+                maxLength={80}
+              />
+              <datalist id={`${uid}-cities`}>
+                {c.cities.map((x) => (
+                  <option key={x} value={x} />
+                ))}
+              </datalist>
+            </label>
+            {state.kind === "error" ? (
+              <p className={s.error} role="alert">
+                {state.message}
+              </p>
+            ) : null}
+            <button type="submit" className={s.cta} disabled={!file || !city.trim()}>
+              <span>{c.submit}</span>
+              <span className={s.ctaIcon}>
+                <Arrow />
+              </span>
+            </button>
+          </>
+        )}
+      </div>
+    </form>
+  );
+}

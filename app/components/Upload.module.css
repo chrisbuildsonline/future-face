@@ -1,0 +1,318 @@
+/* The upload step on the landing. Tokens: app/globals.css, rules: design/DESIGN.md */
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.drop {
+  position: relative;
+  min-height: 340px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 32px;
+  border: 1.5px dashed rgba(23, 20, 15, 0.2);
+  border-radius: var(--r-inner);
+  background: var(--surface-sunk);
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--d-hover) var(--ease), background var(--d-hover) var(--ease);
+}
+
+.drop:hover {
+  border-color: var(--accent);
+  background: #fbf9f6;
+}
+
+.fileInput:focus-visible + .drop {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.drop[data-filled] {
+  border-style: solid;
+  border-color: transparent;
+  place-content: end center;
+  color: #fff;
+}
+
+.preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.drop[data-filled]::after {
+  content: "";
+  position: absolute;
+  inset: 40% 0 0;
+  background: linear-gradient(transparent, rgba(23, 20, 15, 0.6));
+}
+
+.drop[data-filled] .dropTitle,
+.drop[data-filled] .dropHint {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+}
+
+.plus {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.plus::before,
+.plus::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+}
+
+.plus::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.dropTitle {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.dropHint {
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  max-width: 30ch;
+  overflow-wrap: anywhere;
+}
+
+.side {
+  display: grid;
+  align-content: end;
+  gap: 20px;
+  padding: 24px 16px 16px;
+}
+
+.field {
+  display: grid;
+  gap: 10px;
+}
+
+.fieldLabel {
+  font-size: var(--t-small);
+  font-weight: 650;
+}
+
+.input {
+  height: 56px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 550;
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--ink-2);
+  opacity: 0.7;
+}
+
+.input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--t-small);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.error::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  height: 60px;
+  padding: 0 8px 0 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-body);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 14px 30px -14px rgba(23, 20, 15, 0.55);
+  transition: background var(--d-hover) var(--ease), opacity var(--d-hover) var(--ease);
+}
+
+.cta:hover:not(:disabled) {
+  background: var(--ink-hover);
+}
+
+.cta:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.ctaIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  transition: transform var(--d-hover) var(--ease);
+}
+
+.cta:hover:not(:disabled) .ctaIcon {
+  transform: translateX(3px);
+}
+
+/* ---------- loading ---------- */
+.loading {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.sun {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent) 0 36%, var(--accent-glow) 37% 100%);
+  animation: pulse 1.6s var(--ease) infinite;
+}
+
+.loadingTitle {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.loadingBody {
+  color: var(--ink-2);
+  max-width: 44ch;
+}
+
+.elapsed {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--pill-neutral-bg);
+  color: var(--ink-2);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+/* ---------- result in place ---------- */
+.done {
+  display: grid;
+  gap: 32px;
+  justify-items: start;
+  scroll-margin-top: 24px;
+}
+
+.secondary {
+  height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-small);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+    gap: 8px;
+  }
+  .drop {
+    min-height: 260px;
+  }
+  .side {
+    padding: 16px 8px 8px;
+  }
+  .cta {
+    height: 64px;
+    font-size: 17px;
+  }
+}

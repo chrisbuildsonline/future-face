@@ -1,5 +1,7 @@
-import { brand, landing } from "@/lib/copy";
+import Link from "next/link";
+import { brand, landing, upload } from "@/lib/copy";
 import { TwoFutureMark } from "./components/TwoFutureMark";
+import { Upload } from "./components/Upload";
 import styles from "./page.module.css";
 
 function Title() {
@@ -56,14 +58,31 @@ export default function Home() {
             <TwoFutureMark />
           </div>
           <div className={styles.heroAction}>
-            <a href="#how" className={styles.cta}>
+            <Link href="/result" className={styles.cta}>
               <span>{hero.cta}</span>
               <span className={styles.ctaIcon}>
                 <Arrow />
               </span>
-            </a>
-            <p className={styles.ctaNote}>{hero.ctaNote}</p>
+            </Link>
+            <p className={styles.ctaNote}>
+              {hero.ctaNote}{" "}
+              <a href="#upload" className={styles.link}>
+                {hero.ctaAlt}
+              </a>
+            </p>
           </div>
+        </section>
+
+        <section id="upload" className={styles.how} aria-labelledby="upload-title">
+          <div className={styles.sectionHead}>
+            <span className={`${styles.pill} ${styles.pillAccent}`}>{upload.eyebrow}</span>
+            <h2 id="upload-title" className={styles.h2}>
+              {upload.title.slice(0, upload.title.length - upload.titleAccent.length)}
+              <em>{upload.titleAccent}</em>
+            </h2>
+            <p className={styles.lead}>{upload.lead}</p>
+          </div>
+          <Upload />
         </section>
 
         <section id="how" className={styles.how} aria-labelledby="how-title">
