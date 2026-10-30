@@ -63,14 +63,7 @@ export async function getUv(city: string, opts: UvOpts = {}): Promise<Uv> {
   return { city: String(hit.name ?? name), country: String(hit.country ?? ""), lat, lon, uvMax, date, source: "live", attribution: ATTRIBUTION };
 }
 
-/** WHO UV index bands. */
-export function uvBand(uv: number): "low" | "moderate" | "high" | "very_high" | "extreme" {
-  if (uv < 3) return "low";
-  if (uv < 6) return "moderate";
-  if (uv < 8) return "high";
-  if (uv < 11) return "very_high";
-  return "extreme";
-}
+export { uvBand } from "./uv-band";
 
 /** The reading recorded by scripts/record-uv.ts: used when the live lookup fails. */
 export function recordedUv(): Uv {
