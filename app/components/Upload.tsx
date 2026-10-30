@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { errors, upload as c } from "@/lib/copy";
 import type { FutureResult } from "@/lib/pipeline";
+import type { Product } from "@/lib/products";
 import { cropToFace } from "./autoCrop";
 import { Result } from "./Result";
 import s from "./Upload.module.css";
@@ -46,7 +47,15 @@ function Loading({ started }: { started: number }) {
   );
 }
 
-export function Upload() {
+type UploadProps = {
+  catalogue: Product[];
+  /** The store product the shopper came from (embed): the result names it and the routine opens on it. */
+  product?: Product | null;
+  /** Codes the embedding store sells (embed only), passed on to the routine. */
+  cart?: string[] | null;
+};
+
+export function Upload({ catalogue, product = null, cart = null }: UploadProps) {
   const uid = useId();
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [detecting, setDetecting] = useState(false);
@@ -105,8 +114,8 @@ export function Upload() {
 
   if (state.kind === "done") {
     return (
-      <div ref={resultRef} className={s.done}>
-        <Result data={state.data} titleTag="h2" />
+      <div ref={resultRef} className={s.done} data-testid="upload-result">
+        <Result data={state.data} titleTag="h2" catalogue={catalogue} product={product} cart={cart} />
         <button type="button" className={s.secondary} onClick={() => setState({ kind: "idle" })}>
           {c.fileChange}
         </button>

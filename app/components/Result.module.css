@@ -182,6 +182,49 @@
   color: var(--accent);
 }
 
+.withChip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 20px 0 0;
+  padding: 6px 8px 6px 6px;
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-float);
+  font-size: 15px;
+  color: var(--ink-2);
+  max-width: 100%;
+}
+.withChip b {
+  color: var(--ink);
+  font-weight: 650;
+}
+.withThumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: var(--surface-sunk);
+  padding: 4px;
+}
+.withDot {
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.withText {
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .withChip {
+    border-radius: var(--r-card);
+    padding: 10px 14px 10px 10px;
+  }
+}
+
 .lead {
   font-size: var(--t-lead);
   line-height: 1.55;

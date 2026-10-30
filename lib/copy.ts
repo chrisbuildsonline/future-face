@@ -23,6 +23,7 @@ export const landing = {
     cta: "See your two futures",
     ctaNote: "Opens a recorded demo face. No upload, no account.",
     ctaAlt: "Or use your own selfie",
+    store: "See it in a store",
   },
   visual: {
     label: "Illustration of the two-future slider",
@@ -73,7 +74,7 @@ export const landing = {
   },
   footer: {
     note: disclaimer,
-    fiction: "Product names are fictional. Built for the YouCam API Skin AI hackathon.",
+    fiction: "Built for the YouCam API Skin AI hackathon.",
     license: "MIT licensed",
   },
 } as const;
@@ -140,28 +141,30 @@ export const result = {
   },
 } as const;
 
-// The SPF routine + bag that opens from the result (products from lib/routine.ts, all fictional).
+// The SPF routine + saved list that opens from the result (products from lib/catalogue.ts via routineFor).
 export const routine = {
   cta: "Build my SPF routine",
-  ctaNote: "Three fictional products, sized to the UV where you live.",
+  ctaNote: "Three real products, sized to the UV where you live.",
+  ctaNoteGeneric: "Three fictional products, sized to the UV where you live.",
   eyebrow: "Your SPF routine",
   titlePrefix: "Your routine for",
   everyMorning: "every morning.",
   stepLabel: "Step",
   why: "Why this step",
-  add: "Add",
-  added: "Added",
-  bagTitle: "Your bag",
-  bagEmpty: "Nothing here yet. Add a step to start your routine.",
-  subtotal: "Subtotal",
-  shipping: "Shipping",
-  shippingValue: "Free in the demo",
-  checkout: "Checkout",
-  demoNote: "This is a demo store, so no order was placed and nothing was charged. The products are fictional.",
+  add: "Save",
+  added: "Saved",
+  addToCart: "Add to cart",
+  listTitle: "Your routine",
+  listEmpty: "Nothing saved yet. Save a step to keep your routine.",
+  listNote: "Saved on this page only. Find each product in your usual shop.",
+  obf: "View on Open Beauty Facts",
+  with: "With",
   item: "item",
   items: "items",
-  viewBag: "View bag",
+  viewList: "View routine",
   close: "Close",
+  attribution: "Product data and photos: Open Beauty Facts (ODbL, CC BY-SA)",
+  attributionUrl: "https://world.openbeautyfacts.org/terms-of-use",
   fiction: "Fictional products. No brands, no logos.",
   facts: {
     spf: "SPF, every morning",
@@ -197,6 +200,16 @@ export const upload = {
   loading: "Three YouCam models run one after another. A live run usually takes one to two minutes, so keep this tab open.",
   elapsed: "elapsed",
   resultLabel: "Your result",
+} as const;
+
+// The store widget's modal (/result?embed=1): the shopper's own selfie first, the demo face below.
+export const embed = {
+  eyebrow: "On your own face",
+  title: "Try this SPF on your face.",
+  titleAccent: "your face.",
+  lead: "A selfie and your city. See yourself twenty years on, as you live now and with this SPF every morning.",
+  fallback: "Or see it on our demo face",
+  fallbackNote: "A recorded run on a face that does not exist. Nothing to upload.",
 } as const;
 
 export const cityErrors = {

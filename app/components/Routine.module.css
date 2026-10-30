@@ -260,6 +260,89 @@
   margin-left: auto;
 }
 
+/* Real product photos: contained on a soft white tile, no glow. */
+.tile.tilePhoto {
+  background: radial-gradient(70% 60% at 50% 50%, var(--surface), var(--surface-sunk));
+  padding: 28px;
+}
+.tile.tilePhoto::after {
+  display: none;
+}
+.photo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition: transform var(--d-state) var(--ease);
+}
+.step:hover .photo {
+  transform: translateY(-3px);
+}
+.photoSmall {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.step[data-picked] {
+  box-shadow: var(--shadow-card), 0 0 0 2px var(--accent);
+}
+.fit {
+  align-self: flex-start;
+  margin: -4px 4px 0;
+}
+.brand {
+  margin: 0 0 2px;
+  font-size: var(--t-micro, 12px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.bagItemBrand {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.obf {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--hairline);
+  text-underline-offset: 4px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.obf:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+.add.addCart {
+  background: var(--ink);
+  color: #fff;
+}
+.add.addCart:hover {
+  background: #2a2620;
+}
+.attribution {
+  margin: 24px 0 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.attribution a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--hairline);
+}
+
 .tile {
   position: relative;
   display: grid;

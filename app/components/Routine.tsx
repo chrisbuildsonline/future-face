@@ -2,31 +2,27 @@
 
 import { useId, useRef, useState, type Ref } from "react";
 import { result as rc, routine as c } from "@/lib/copy";
-import { bagTotal, buildRoutine, formatPrice, PRODUCTS, type Product } from "@/lib/routine";
+import { productLabel, type Product } from "@/lib/products";
+import { routineFor } from "@/lib/routine";
 import type { Uv } from "@/lib/uv";
 import s from "./Routine.module.css";
 
 type Format = "tube" | "bottle" | "compact" | "mist" | "stick" | "jar";
 
-const FORMATS: Record<string, Format> = {
-  "daily-lotion-30": "tube",
-  "noon-fluid-50": "bottle",
-  "tint-compact-30": "compact",
-  "veil-mist-30": "mist",
-  "glide-stick-50": "stick",
-  "dusk-balm": "jar",
+const FORMATS: Record<Product["kind"], Format> = {
+  cream: "tube",
+  fluid: "bottle",
+  stick: "stick",
+  spray: "mist",
+  cleanser: "jar",
 };
 
-function formatOf(p: Product): Format {
-  const known = FORMATS[p.id];
-  if (known) return known;
-  const f = p.format.toLowerCase();
-  if (f.includes("stick")) return "stick";
-  if (f.includes("compact")) return "compact";
-  if (f.includes("mist")) return "mist";
-  if (f.includes("balm")) return "jar";
-  if (f.includes("fluid")) return "bottle";
-  return "tube";
+const formatOf = (p: Product): Format => FORMATS[p.kind] ?? "tube";
+
+/** The real product photo on a soft white tile, or the drawn package when the catalogue has no photo. */
+export function ProductImage({ product, small = false }: { product: Product; small?: boolean }) {
+  if (!product.image) return <ProductArt product={product} small={small} />;
+  return <img src={product.image} alt={productLabel(product)} className={small ? s.photoSmall : s.photo} data-testid="product-photo" />;
 }
 
 export function Arrow() {
@@ -186,91 +182,63 @@ function ProductArt({ product, small = false }: { product: Product; small?: bool
 
 const countLabel = (n: number) => `${n} ${n === 1 ? c.item : c.items}`;
 
-type BagProps = {
-  idPrefix: string;
-  ids: string[];
-  note: boolean;
-  onCheckout: () => void;
-};
-
-/** The bag contents: shared by the desktop rail card and the phone bottom sheet. */
-function BagBody({ idPrefix, ids, note, onCheckout }: BagProps) {
-  const total = bagTotal(ids);
+/** The saved routine list: shared by the desktop rail card and the phone bottom sheet. */
+function ListBody({ idPrefix, items, generic }: { idPrefix: string; items: Product[]; generic: boolean }) {
   return (
     <>
       <div className={s.bagHead}>
         <h3 id={`${idPrefix}-title`} className={s.bagTitle}>
-          {c.bagTitle}
+          {c.listTitle}
         </h3>
-        <span className={`${s.pill} ${s.pillNeutral}`} data-testid="bag-count">
-          {countLabel(ids.length)}
+        <span className={`${s.pill} ${items.length ? s.pillAccent : s.pillNeutral}`} data-testid="bag-count">
+          {countLabel(items.length)}
         </span>
       </div>
-      {ids.length ? (
+      {items.length ? (
         <ul className={s.bagItems}>
-          {ids.map((id) => {
-            const p = PRODUCTS[id];
-            if (!p) return null;
-            return (
-              <li key={id} className={s.bagItem} data-testid="bag-item">
-                <span className={s.bagThumb}>
-                  <ProductArt product={p} small />
-                </span>
-                <span className={s.bagItemText}>
-                  <span className={s.bagItemName}>{p.name}</span>
-                  <span className={s.bagItemSize}>{p.size}</span>
-                </span>
-                <span className={s.bagItemPrice}>{formatPrice(p.priceCents)}</span>
-              </li>
-            );
-          })}
+          {items.map((p) => (
+            <li key={p.code} className={s.bagItem} data-testid="bag-item">
+              <span className={s.bagThumb}>
+                <ProductImage product={p} small />
+              </span>
+              <span className={s.bagItemText}>
+                {p.brand ? <span className={s.bagItemBrand}>{p.brand}</span> : null}
+                <span className={s.bagItemName}>{p.name}</span>
+                {p.size ? <span className={s.bagItemSize}>{p.size}</span> : null}
+              </span>
+              {p.spf ? <span className={`${s.pill} ${s.pillNeutral}`}>SPF {p.spf}</span> : null}
+            </li>
+          ))}
         </ul>
       ) : (
-        <p className={s.bagEmpty}>{c.bagEmpty}</p>
+        <p className={s.bagEmpty}>{c.listEmpty}</p>
       )}
-      <dl className={s.totals}>
-        <div className={s.totalRow}>
-          <dt>{c.shipping}</dt>
-          <dd>{c.shippingValue}</dd>
-        </div>
-        <div className={`${s.totalRow} ${s.subtotal}`}>
-          <dt>{c.subtotal}</dt>
-          <dd data-testid="bag-subtotal">{formatPrice(total)}</dd>
-        </div>
-      </dl>
-      <button type="button" className={`${s.cta} ${s.ctaBlock}`} disabled={!ids.length} onClick={onCheckout}>
-        <span>{c.checkout}</span>
-        <span className={s.ctaIcon}>
-          <Arrow />
-        </span>
-      </button>
-      <p className={s.note} role="status">
-        {note ? (
-          <>
-            <span className={s.noteDot} aria-hidden />
-            {c.demoNote}
-          </>
-        ) : null}
-      </p>
-      <p className={s.fiction}>{c.fiction}</p>
+      <p className={s.fiction}>{generic ? c.fiction : c.listNote}</p>
     </>
   );
 }
 
-type RoutineProps = { id: string; uv: Uv; headingRef: Ref<HTMLHeadingElement> };
+type RoutineProps = {
+  id: string;
+  uv: Uv;
+  headingRef: Ref<HTMLHeadingElement>;
+  catalogue: Product[];
+  prefer?: string | null;
+  /** Codes the embedding store sells: those steps post "future-face:add" to the parent page. */
+  cart?: string[] | null;
+};
 
-export function Routine({ id, uv, headingRef }: RoutineProps) {
+export function Routine({ id, uv, headingRef, catalogue, prefer, cart }: RoutineProps) {
   const uid = useId();
-  const r = buildRoutine(uv.uvMax);
+  const r = routineFor(uv.uvMax, catalogue, prefer);
   const [ids, setIds] = useState<string[]>([]);
-  const [note, setNote] = useState(false);
   const sheet = useRef<HTMLDialogElement>(null);
   const watch = r.band !== "low" && r.band !== "moderate";
+  const generic = r.steps.some((x) => x.product.source === "generic");
+  const items = ids.map((code) => r.steps.find((x) => x.product.code === code)?.product).filter((p): p is Product => !!p);
 
-  const toggle = (pid: string) => {
-    setNote(false);
-    setIds((xs) => (xs.includes(pid) ? xs.filter((x) => x !== pid) : [...xs, pid]));
-  };
+  const toggle = (code: string) => setIds((xs) => (xs.includes(code) ? xs.filter((x) => x !== code) : [...xs, code]));
+  const addToCart = (code: string) => window.parent.postMessage({ type: "future-face:add", code }, "*");
 
   return (
     <section id={id} className={s.routine} aria-labelledby={`${uid}-t`}>
@@ -308,9 +276,19 @@ export function Routine({ id, uv, headingRef }: RoutineProps) {
         <ol className={s.steps}>
           {r.steps.map((step, i) => {
             const p = step.product;
-            const on = ids.includes(p.id);
+            const on = ids.includes(p.code);
+            const sold = cart?.includes(p.code) ?? false;
+            const picked = step.id === "morning" && r.preferred?.code === p.code;
             return (
-              <li key={step.id} className={s.step} data-testid="routine-step" data-selected={on || undefined}>
+              <li
+                key={step.id}
+                className={s.step}
+                data-testid="routine-step"
+                data-step={step.id}
+                data-code={p.code}
+                data-selected={on || undefined}
+                data-picked={picked || undefined}
+              >
                 <div className={s.stepHead}>
                   <span className={s.stepNum} aria-hidden>
                     {String(i + 1).padStart(2, "0")}
@@ -318,25 +296,43 @@ export function Routine({ id, uv, headingRef }: RoutineProps) {
                   <span className={s.stepLabel}>{step.label}</span>
                   {p.spf ? <span className={`${s.pill} ${s.pillNeutral} ${s.stepSpf}`}>SPF {p.spf}</span> : null}
                 </div>
-                <div className={s.tile}>
-                  <ProductArt product={p} />
+                <div className={`${s.tile} ${p.image ? s.tilePhoto : ""}`}>
+                  <ProductImage product={p} />
                 </div>
+                {picked && r.fit ? (
+                  <span className={`${s.pill} ${r.fit.ok ? s.pillGood : s.pillWatch} ${s.fit}`} data-testid="fit-pill">
+                    {r.fit.line}
+                  </span>
+                ) : null}
                 <div className={s.info}>
+                  {p.brand ? <p className={s.brand}>{p.brand}</p> : null}
                   <h3 className={s.name}>{p.name}</h3>
-                  <p className={s.size}>
-                    {p.format} · {p.size}
-                  </p>
+                  <p className={s.size}>{[p.kind, p.size].filter(Boolean).join(" · ")}</p>
                 </div>
                 <p className={s.why}>
                   <span className={s.whyLabel}>{c.why}</span>
                   {step.why}
                 </p>
                 <div className={s.buy}>
-                  <span className={s.price}>{formatPrice(p.priceCents)}</span>
-                  <button type="button" className={s.add} aria-pressed={on} aria-label={`${c.add} ${p.name}`} onClick={() => toggle(p.id)}>
-                    {on ? <Check /> : <Plus />}
-                    <span className={s.addText}>{on ? c.added : c.add}</span>
-                  </button>
+                  {p.url ? (
+                    <a href={p.url} className={s.obf} target="_blank" rel="noreferrer">
+                      {c.obf}
+                      <span aria-hidden> ↗</span>
+                    </a>
+                  ) : (
+                    <span />
+                  )}
+                  {sold ? (
+                    <button type="button" className={`${s.add} ${s.addCart}`} aria-label={`${c.addToCart}: ${productLabel(p)}`} onClick={() => addToCart(p.code)}>
+                      <Plus />
+                      <span className={s.addText}>{c.addToCart}</span>
+                    </button>
+                  ) : (
+                    <button type="button" className={s.add} aria-pressed={on} aria-label={`${c.add} ${p.name}`} onClick={() => toggle(p.code)}>
+                      {on ? <Check /> : <Plus />}
+                      <span className={s.addText}>{on ? c.added : c.add}</span>
+                    </button>
+                  )}
                 </div>
               </li>
             );
@@ -344,16 +340,24 @@ export function Routine({ id, uv, headingRef }: RoutineProps) {
         </ol>
 
         <aside className={s.bag} data-testid="bag" aria-labelledby={`${uid}-rail-title`}>
-          <BagBody idPrefix={`${uid}-rail`} ids={ids} note={note} onCheckout={() => setNote(true)} />
+          <ListBody idPrefix={`${uid}-rail`} items={items} generic={generic} />
         </aside>
       </div>
 
+      {generic ? null : (
+        <p className={s.attribution}>
+          <a href={c.attributionUrl} target="_blank" rel="noreferrer">
+            {c.attribution}
+          </a>
+        </p>
+      )}
+
       <div className={s.bar} data-testid="bag-bar">
         <span className={s.barSummary} aria-live="polite">
-          <b>{countLabel(ids.length)}</b> · {formatPrice(bagTotal(ids))}
+          <b>{c.listTitle}</b> · {countLabel(ids.length)}
         </span>
         <button type="button" className={`${s.cta} ${s.ctaCompact}`} aria-haspopup="dialog" onClick={() => sheet.current?.showModal()}>
-          <span>{c.viewBag}</span>
+          <span>{c.viewList}</span>
           <span className={s.ctaIcon}>
             <Arrow />
           </span>
@@ -375,7 +379,7 @@ export function Routine({ id, uv, headingRef }: RoutineProps) {
               {c.close}
             </button>
           </div>
-          <BagBody idPrefix={`${uid}-sheet`} ids={ids} note={note} onCheckout={() => setNote(true)} />
+          <ListBody idPrefix={`${uid}-sheet`} items={items} generic={generic} />
         </div>
       </dialog>
     </section>

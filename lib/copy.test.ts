@@ -57,8 +57,8 @@ describe("lib/copy", () => {
 
   test("exports the routine copy, and it is clean", () => {
     expect(copy.routine.cta).toBe("Build my SPF routine");
-    expect(copy.routine.checkout.length).toBeGreaterThan(0);
-    expect(copy.routine.demoNote.toLowerCase()).toContain("demo");
+    expect(copy.routine.listTitle).toBe("Your routine");
+    expect(JSON.stringify(copy.routine)).not.toMatch(/€|checkout|subtotal|price/i);
     expect(findBannedWords(copy.routine)).toEqual([]);
   });
 

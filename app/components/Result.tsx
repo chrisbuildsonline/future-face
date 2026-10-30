@@ -6,6 +6,8 @@ import type { FutureResult } from "@/lib/pipeline";
 import type { Uv } from "@/lib/uv";
 import { uvBand } from "@/lib/uv-band";
 import s from "./Result.module.css";
+import { productLabel, type Product } from "@/lib/products";
+import { routineFor } from "@/lib/routine";
 import { Arrow, Routine } from "./Routine";
 import r from "./Routine.module.css";
 
@@ -283,16 +285,27 @@ function UvCard({ uv }: { uv: Uv }) {
   );
 }
 
-export function Result({ data, titleTag: Title = "h1" }: { data: FutureResult; titleTag?: "h1" | "h2" }) {
+type ResultProps = {
+  data: FutureResult;
+  titleTag?: "h1" | "h2";
+  catalogue: Product[];
+  /** A product picked on a store page: shown first, and the routine opens with it as the morning step. */
+  product?: Product | null;
+  cart?: string[] | null;
+};
+
+export function Result({ data, titleTag: Title = "h1", catalogue, product = null, cart = null }: ResultProps) {
   const uid = useId();
   const [years, setYears] = useState(() => data.horizons[data.horizons.length - 1]?.years ?? 0);
-  const [routineOpen, setRoutineOpen] = useState(false);
+  const [routineOpen, setRoutineOpen] = useState(Boolean(product));
   const routineHead = useRef<HTMLHeadingElement>(null);
   const routineId = `${uid}-routine`;
+  const clicked = useRef(false);
+  const fit = product && data.uv ? routineFor(data.uv.uvMax, catalogue, product.code).fit : null;
 
-  // Opening the routine moves focus (and the view) to its heading.
+  // Opening the routine by its button moves focus (and the view) to its heading; a preselected one just sits below.
   useEffect(() => {
-    if (routineOpen) {
+    if (routineOpen && clicked.current) {
       routineHead.current?.focus({ preventScroll: true });
       routineHead.current?.scrollIntoView({ block: "start" });
     }
@@ -304,6 +317,7 @@ export function Result({ data, titleTag: Title = "h1" }: { data: FutureResult; t
   const labelOf = (i: number, y: number) => landing.visual.horizon[i] ?? `+${y} yrs`;
 
   const openRoutine = () => {
+    clicked.current = true;
     if (!routineOpen) {
       setRoutineOpen(true);
       return;
@@ -336,6 +350,15 @@ export function Result({ data, titleTag: Title = "h1" }: { data: FutureResult; t
             {c.titlePrefix} {h.targetAge}. <em>{c.titleAccent}</em>
           </Title>
           <p className={s.lead}>{c.lead}</p>
+          {product ? (
+            <p className={s.withChip} data-testid="with-product">
+              {product.image ? <img src={product.image} alt="" className={s.withThumb} /> : <span className={s.withDot} aria-hidden />}
+              <span className={s.withText}>
+                {rc.with} <b>{productLabel(product)}</b>
+              </span>
+              {fit ? <span className={`${s.pill} ${fit.ok ? s.pillGood : s.pillWatch}`}>{fit.line}</span> : null}
+            </p>
+          ) : null}
         </div>
         <div className={s.horizonWrap}>
           <span className={s.horizonLabel} id={`${uid}-hz`}>
@@ -373,7 +396,7 @@ export function Result({ data, titleTag: Title = "h1" }: { data: FutureResult; t
 
       {data.uv ? (
         <div className={s.next}>
-          <p className={s.nextNote}>{rc.ctaNote}</p>
+          <p className={s.nextNote}>{catalogue.some((p) => p.source === "generic") ? rc.ctaNoteGeneric : rc.ctaNote}</p>
           <button
             type="button"
             className={`${r.cta} ${s.nextCta}`}
@@ -389,7 +412,9 @@ export function Result({ data, titleTag: Title = "h1" }: { data: FutureResult; t
         </div>
       ) : null}
     </section>
-    {routineOpen && data.uv ? <Routine id={routineId} uv={data.uv} headingRef={routineHead} /> : null}
+    {routineOpen && data.uv ? (
+      <Routine id={routineId} uv={data.uv} headingRef={routineHead} catalogue={catalogue} prefer={product?.code} cart={cart} />
+    ) : null}
     </>
   );
 }
