@@ -30,3 +30,14 @@ Third-party runtime assets (not committed; scripts/mediapipe-assets.ts puts them
 UV reading
 - fixtures/demo/uv.json is a recorded reading from Open-Meteo (CC BY 4.0).
   Weather data by Open-Meteo.com, https://open-meteo.com/
+
+Products
+- fixtures/products.json and fixtures/obf-sample.json hold product data from
+  Open Beauty Facts (https://world.openbeautyfacts.org), licensed under the
+  Open Database License (ODbL) 1.0, https://opendatacommons.org/licenses/odbl/1-0/
+  The images in public/products/ are product photos from Open Beauty Facts,
+  licensed under CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/
+  and resized to at most 600 px JPEG. Contributors are the Open Beauty Facts
+  community; each product's source page is its "url" in fixtures/products.json.
+  Brand and product names belong to their owners and are shown only to identify
+  the products.
