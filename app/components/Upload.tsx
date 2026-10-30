@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { errors, upload as c } from "@/lib/copy";
 import type { FutureResult } from "@/lib/pipeline";
+import { cropToFace } from "./autoCrop";
 import { Result } from "./Result";
 import s from "./Upload.module.css";
 
@@ -11,6 +12,9 @@ type State =
   | { kind: "loading"; started: number }
   | { kind: "error"; message: string }
   | { kind: "done"; data: FutureResult };
+
+// original = what the person picked; cropped = the face crop, if one was made; useCrop = not undone.
+type Photo = { original: File; cropped: File | null; useCrop: boolean };
 
 function Arrow() {
   return (
@@ -44,7 +48,10 @@ function Loading({ started }: { started: number }) {
 
 export function Upload() {
   const uid = useId();
-  const [file, setFile] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<Photo | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const pickId = useRef(0);
+  const file = photo ? (photo.useCrop && photo.cropped) || photo.original : null;
   const [preview, setPreview] = useState<string | null>(null);
   const [city, setCity] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
@@ -68,9 +75,20 @@ export function Upload() {
     }
   }, [state.kind]);
 
+  async function pick(f: File | null) {
+    const id = ++pickId.current;
+    setPhoto(f ? { original: f, cropped: null, useCrop: true } : null);
+    setDetecting(!!f);
+    if (!f) return;
+    const cropped = await cropToFace(f);
+    if (id !== pickId.current) return; // a newer photo was picked meanwhile
+    setPhoto({ original: f, cropped, useCrop: true });
+    setDetecting(false);
+  }
+
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!file || !city.trim()) return;
+    if (!file || detecting || !city.trim()) return;
     setState({ kind: "loading", started: Date.now() });
     const body = new FormData();
     body.set("selfie", file);
@@ -99,6 +117,9 @@ export function Upload() {
   const busy = state.kind === "loading";
   const fileId = `${uid}-file`;
   const hintId = `${uid}-hint`;
+  const cropped = !detecting && photo?.cropped ? photo : null;
+  const statusText = detecting ? c.cropFinding : cropped ? (cropped.useCrop ? c.cropDone : c.cropFull) : "";
+  const statusTone = detecting ? "busy" : cropped ? (cropped.useCrop ? "accent" : "neutral") : undefined;
   return (
     <form className={s.card} onSubmit={submit} aria-busy={busy}>
       <input
@@ -108,25 +129,52 @@ export function Upload() {
         accept="image/jpeg,image/png"
         aria-describedby={hintId}
         disabled={busy}
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        onChange={(e) => void pick(e.target.files?.[0] ?? null)}
       />
-      <label
-        htmlFor={fileId}
-        className={s.drop}
-        data-filled={preview ? "" : undefined}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault();
-          const f = e.dataTransfer.files[0];
-          if (f) setFile(f);
-        }}
-      >
-        {preview ? <img src={preview} alt="" className={s.preview} /> : <span className={s.plus} aria-hidden />}
-        <span className={s.dropTitle}>{file ? c.fileChange : c.file}</span>
-        <span id={hintId} className={s.dropHint}>
-          {file ? file.name : c.fileHint}
-        </span>
-      </label>
+      <div className={s.dropWrap}>
+        <label
+          htmlFor={fileId}
+          className={s.drop}
+          data-filled={preview ? "" : undefined}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const f = e.dataTransfer.files[0];
+            if (f && !busy) void pick(f);
+          }}
+        >
+          {preview ? (
+            <>
+              {/* The whole photo as sent (contain), over a soft blurred copy that fills the tile. */}
+              <img src={preview} alt="" className={s.backdrop} aria-hidden />
+              <img src={preview} alt="" className={s.preview} data-testid="upload-preview" />
+            </>
+          ) : (
+            <span className={s.plus} aria-hidden />
+          )}
+          <span className={s.dropTitle}>{file ? c.fileChange : c.file}</span>
+          <span id={hintId} className={s.dropHint}>
+            {file ? file.name : c.fileHint}
+          </span>
+        </label>
+        {/* A sibling of the label, not a child: a button inside a label is invalid and would open the picker.
+            Always mounted so screen readers hear each change in the polite live region. */}
+        <div className={s.status} data-tone={statusTone}>
+          <span className={s.statusText} role="status" aria-live="polite">
+            {statusText}
+          </span>
+          {cropped ? (
+            <button
+              type="button"
+              className={s.statusAction}
+              disabled={busy}
+              onClick={() => setPhoto({ ...cropped, useCrop: !cropped.useCrop })}
+            >
+              {cropped.useCrop ? c.cropUndo : c.cropAgain}
+            </button>
+          ) : null}
+        </div>
+      </div>
 
       <div className={s.side}>
         {busy ? (
@@ -155,7 +203,7 @@ export function Upload() {
                 {state.message}
               </p>
             ) : null}
-            <button type="submit" className={s.cta} disabled={!file || !city.trim()}>
+            <button type="submit" className={s.cta} disabled={!file || detecting || !city.trim()}>
               <span>{c.submit}</span>
               <span className={s.ctaIcon}>
                 <Arrow />

@@ -183,6 +183,12 @@ export const upload = {
   file: "Choose a selfie",
   fileHint: "JPG or PNG, facing the camera, up to 10 MB",
   fileChange: "Change photo",
+  // The in-browser face crop on the drop tile (app/components/autoCrop.ts).
+  cropFinding: "Finding your face",
+  cropDone: "We cropped to your face",
+  cropUndo: "Undo",
+  cropFull: "Using your full photo",
+  cropAgain: "Crop again",
   city: "Your city",
   cityPlaceholder: "Lisbon",
   cities: ["Lisbon", "Madrid", "London", "Stockholm", "Cape Town", "Sydney", "Brisbane", "Singapore", "Mexico City", "Los Angeles"],

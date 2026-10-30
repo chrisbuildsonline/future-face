@@ -41,24 +41,140 @@
   background: #fbf9f6;
 }
 
-.fileInput:focus-visible + .drop {
+.fileInput:focus-visible + .dropWrap .drop {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
 
+/* The drop tile plus the crop status that floats on its photo. */
+.dropWrap {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+
+/* ---------- face-crop status: a tinted pill (DESIGN.md "Pill / chip" + status tints) ---------- */
+/* Top-left corner tag, like the slider's corner tags: the crop centres the face, so the corner stays clear of it. */
+.status {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  max-width: calc(100% - 32px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.status[data-tone] {
+  padding: 0 12px;
+  box-shadow: var(--shadow-float);
+  pointer-events: auto;
+}
+
+.status[data-tone]::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status[data-tone="accent"] {
+  background: var(--pill-accent-bg);
+  color: var(--pill-accent-fg);
+}
+
+.status[data-tone="neutral"],
+.status[data-tone="busy"] {
+  background: var(--pill-neutral-bg);
+  color: var(--pill-neutral-fg);
+}
+
+.status[data-tone="busy"]::before {
+  background: var(--accent);
+  animation: pulse 1.2s var(--ease) infinite;
+}
+
+.statusText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* DESIGN.md "Secondary": a text button in --ink with a 1px underline at 4px offset. */
+.statusAction {
+  position: relative;
+  flex: none;
+  margin-left: 4px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+/* 44px touch target without growing the 28px pill. */
+.statusAction::after {
+  content: "";
+  position: absolute;
+  inset: -16px -10px;
+}
+
+.statusAction:hover {
+  color: var(--accent);
+}
+
+.statusAction:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status[data-tone="busy"]::before {
+    animation: none;
+  }
+}
+
 .drop[data-filled] {
+  aspect-ratio: 4 / 3;
   border-style: solid;
   border-color: transparent;
   place-content: end center;
+  background: var(--ink);
   color: #fff;
 }
 
-.preview {
+/* Contain, not cover: the person sees the whole photo that will be sent (the square face crop included). */
+.preview,
+.backdrop {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+.preview {
+  object-fit: contain;
+}
+
+.backdrop {
   object-fit: cover;
+  filter: blur(28px) saturate(1.1);
+  opacity: 0.85;
+  transform: scale(1.15);
 }
 
 .drop[data-filled]::after {
@@ -307,6 +423,9 @@
   }
   .drop {
     min-height: 260px;
+  }
+  .drop[data-filled] {
+    aspect-ratio: 1;
   }
   .side {
     padding: 16px 8px 8px;
