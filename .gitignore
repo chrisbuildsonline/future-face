@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+.DS_Store
+PLAN.md
+CLAUDE.md
+.omc/
+.claude/
+design/refs/
