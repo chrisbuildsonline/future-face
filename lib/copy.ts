@@ -77,6 +77,10 @@ export const landing = {
   },
 } as const;
 
+export const cityErrors = {
+  city_not_found: "We couldn't find that city. Try the nearest big city, like \"Lisbon\".",
+} as const;
+
 // What the person sees when a photo or a request doesn't go through.
 export const errors: Record<ErrorKind, string> = {
   no_face: "We couldn't find a face in that photo. Try a clear selfie where your face is easy to see.",
