@@ -2,7 +2,7 @@
 
 **Two faces of you, 10 or 20 years on, side by side: one that kept living as now, and the same face after daily sunscreen, both measured by the same model.**
 
-One selfie goes through three YouCam APIs in a row. The **AI Aging Generator** projects you forward. **AI Skin Simulation** takes that same frame and dials spots, wrinkles and texture by 0.24, an intensity taken from a 4.5-year trial of daily sunscreen (Hughes et al., 2013). **AI Skin Analysis** then reads both renders, so the gap shows up as numbers. Then the app sizes an SPF routine to your city's UV index and lets you add it to a bag.
+One selfie goes through three YouCam APIs in a row. The **AI Aging Generator** projects you forward. **AI Skin Simulation** takes that same frame and dials spots, wrinkles and texture by 0.24, an intensity taken from a 4.5-year trial of daily sunscreen (Hughes et al., 2013). **AI Skin Analysis** then reads both renders, so the gap shows up as numbers. Then the app sizes an SPF routine of real products (from Open Beauty Facts) to your city's UV index. A store can embed all of it on a product page with two lines of HTML.
 
 On the demo face at +20 years, Skin Analysis reads wrinkles **71.2 → 79.1**, texture **91.4 → 97.5** and spots **96.4 → 98.8** (raw_score, higher = better-looking skin). These are the model's readings of two renders. They are an illustrative projection, not a prognosis.
 
@@ -29,18 +29,18 @@ You need Bun. Next.js also needs a recent Node.js on the path.
 2. **AI Skin Simulation.** That same frame goes in with `spots`, `wrinkle` and `texture` at **0.24** each on the model's 0 to 1 scale. This is the "With daily SPF" face. The 0.24 comes from the 24% less skin aging reported for daily sunscreen users against discretionary users in Hughes MCB, Williams GM, Baker P, Green AC. *Sunscreen and prevention of skin aging: a randomized trial.* Ann Intern Med. 2013;158(11):781-790. doi:[10.7326/0003-4819-158-11-201306040-00002](https://doi.org/10.7326/0003-4819-158-11-201306040-00002). Every intensity on screen has a **Source** chip that opens this citation.
 3. **AI Skin Analysis.** Both renders are read with the same SD actions (`wrinkle`, `age_spot`, `texture`). The **measured line** shows each `raw_score` (0 to 100, higher = better-looking skin) for both faces and the difference. It is labelled as the model's reading of a render, not a reading of you.
 4. **UV where you live.** The city you type is looked up on [Open-Meteo](https://open-meteo.com/) (free, no key), which returns today's peak UV index forecast. The UV card shows the reading with "Weather data by Open-Meteo.com · CC BY 4.0". The demo uses a recorded reading for Nambour, Queensland (UV 7.8), where the Hughes trial ran.
-5. **Build my SPF routine.** The UV index sets the WHO band, and the band sets the routine: SPF 30 for low and moderate UV, SPF 50 for high and above. Two finger lengths (about ¼ teaspoon) for face and neck, and a top-up every 2 hours outdoors from moderate UV up. Each routine has three steps (morning, midday top-up, evening), drawn from six fictional products. **Add** puts them in a bag with a subtotal. **Checkout** shows a demo note: no order is placed and nothing is charged.
+5. **Build my SPF routine.** The UV index sets the WHO band, and the band sets the routine: SPF 30 for low and moderate UV, SPF 50 for high and above. Two finger lengths (about ¼ teaspoon) for face and neck, and a top-up every 2 hours outdoors from moderate UV up. Each routine has three steps (morning, midday top-up, evening), drawn from real products in [fixtures/products.json](fixtures/products.json) (Open Beauty Facts data and photos, ODbL / CC BY-SA). Each card shows the photo, brand, SPF, size, why this step, and a link to the product on Open Beauty Facts. There are no prices: **Save** keeps a step in **Your routine**. `/result?product=<barcode>` makes that product the morning step and says whether its SPF covers the day; `/result?embed=1` is the same view for the store widget, and `/store/<barcode>` is a made-up shop, Sunday Pharmacy, showing the widget ([public/widget.js](public/widget.js)) embedded the way a store would.
 
 ![The Source chip open on the measured line: 24% less skin aging with daily sunscreen, the Hughes 2013 citation and its doi](docs/screenshots/citation.png)
 
-![The SPF routine for UV 7.8: SPF 50, ¼ tsp, 2 h top-ups, three fictional products and a bag with two items at €54](docs/screenshots/routine-desktop.png)
+![The SPF routine for UV 7.8: SPF 50, ¼ tsp, 2 h top-ups, three real products with photos, and the saved routine list](docs/screenshots/routine-desktop.png)
 
-On a phone, the routine button stays pinned and the bag opens as a bottom sheet from **View bag**:
+On a phone, the routine button stays pinned and the saved routine opens as a bottom sheet from **View routine**:
 
 <p>
   <img src="docs/screenshots/result-phone.png" alt="The result screen on a phone" width="220">
   &nbsp;
-  <img src="docs/screenshots/routine-phone.png" alt="The SPF routine on a phone, with the bag bar at the bottom" width="220">
+  <img src="docs/screenshots/routine-phone.png" alt="The SPF routine on a phone, with the routine bar at the bottom" width="220">
 </p>
 
 ## The three YouCam APIs
@@ -59,7 +59,7 @@ A live run costs about 46 YouCam units: aging about 2, two simulations about 4 e
 
 Without a key the app still works end to end:
 
-- The landing button **See your two futures** and the `/result` page always show the recorded run in [fixtures/demo/](fixtures/demo/) (input face, frames, both renders and the Skin Analysis scores in [result.json](fixtures/demo/result.json)), with the recorded Nambour UV reading. The routine and bag work on it as normal.
+- The landing button **See your two futures** and the `/result` page always show the recorded run in [fixtures/demo/](fixtures/demo/) (input face, frames, both renders and the Skin Analysis scores in [result.json](fixtures/demo/result.json)), with the recorded Nambour UV reading. The routine works on it as normal.
 - An upload on the landing page (**Show my two futures**) still looks up your city's UV, then returns the recorded demo faces with a notice: "Live photos are turned off in this version of the app. The demo face still works." If the UV lookup is down, that result has no UV card and no routine button; the `/result` page always has both.
 
 ## Live runs and environment
@@ -78,6 +78,9 @@ LIVE_RUNS_MAX=5
 | `YOUCAM_SECRET_KEY` | Live runs | Sent as the Bearer token on every YouCam call. Without it, uploads return the demo with a notice. |
 | `YOUCAM_API_URL` | Optional | YouCam host. Defaults to `https://yce-api-01.makeupar.com`; an invalid URL falls back to the default. |
 | `LIVE_RUNS_MAX` | Optional | Live runs allowed per server process, default 5, to protect units. Every attempt counts; the count resets on restart. Past it, uploads get `429 rate_limited`. |
+| `FF_CATALOGUE` | Optional | Set to `generic` to use the six fictional products instead of the real ones in `fixtures/products.json`, so no brand names show. |
+| `FF_URL` | Optional | Address of this app that the demo shop's widget points at. Read by `bun run store` on every run and saved in the shop; defaults to `http://localhost:3000`. |
+| `FF_STORE_ADMIN_PASSWORD` | Optional | Admin password for the demo shop made by `bun run store`. If unset, a random one is printed once on first setup. |
 
 ## Scripts
 
@@ -90,7 +93,10 @@ LIVE_RUNS_MAX=5
 | `bun run e2e` | Playwright: builds the app, serves it on port 3100 and runs [e2e/](e2e/). First time, run `bunx playwright install chromium`. |
 | `bun run docker:build` | Build the Docker image `future-face` |
 | `bun run docker:test` | Build the image, run unit tests, typecheck and e2e inside it, and fail unless all pass. Log lands in `test-results/docker-suite.log`. |
+| `bun run store` | Start the demo WooCommerce shop on http://localhost:8080 (needs Docker) |
+| `bun run store:down` | Stop the shop; its data is kept |
 | `bun run record` | Re-records [fixtures/demo/](fixtures/demo/) with one live run on the source face. Needs `YOUCAM_SECRET_KEY`; costs about 46 units (reuses a recorded aging step if present). The source face lives in `fixtures/source/`, which is git-ignored. |
+| `bun run products` | Refetches the sunscreens and cleansers from Open Beauty Facts into [fixtures/products.json](fixtures/products.json) and `public/products/` (free, no key) |
 | `bun run record:uv` | Re-records today's Nambour UV reading into `fixtures/demo/uv.json` |
 
 ## Run it in Docker
@@ -107,6 +113,30 @@ Then open http://localhost:3000. To run the whole suite (unit tests, typecheck, 
 ```sh
 bun run docker:test
 ```
+
+## Run it in a store (WooCommerce, two commands)
+
+A real local WooCommerce shop with the Future Face plugin on every product page. Needs Docker; no accounts.
+
+```sh
+bun run store   # WordPress + WooCommerce on http://localhost:8080, products seeded
+bun run dev     # this app on http://localhost:3000
+```
+
+`bun run store` prints the admin login (user `admin`) and the address of an SPF 50 product page. Open it and Future Face sits under the add-to-cart button. The shop carries WooCommerce's demo-store notice, and every price is a demo placeholder (one per kind of product, 9.90 to 18.90): Open Beauty Facts has no prices. Product data comes from [Open Beauty Facts](https://world.openbeautyfacts.org/), ODbL. Set `FF_STORE_ADMIN_PASSWORD` first to choose the admin password. The widget points at `http://localhost:3000` by default; if the app runs on another port, run `bun run store -- --url http://localhost:3100` (rerunning is safe; the `FF_URL` env var works too). `bun run store:down` stops the shop.
+
+## Add it to your own store in two lines
+
+```html
+<script src="http://localhost:3000/widget.js" defer></script>
+<div data-future-face data-product="3600000000000" data-spf="50" data-cart='{"3600000000000":"/?add-to-cart=12"}'></div>
+```
+
+- `data-product`: the product's barcode (8 to 14 digits).
+- `data-spf`: the product's SPF number.
+- `data-cart` (optional): JSON map from barcode to your add-to-cart URL, for every product in the shop, so the routine's products can go into the real cart.
+
+On WordPress, the plugin in [store/future-face-woocommerce/](store/future-face-woocommerce/) does this on every single-product view. Set the app address under Settings > Future Face.
 
 ## API
 
@@ -134,13 +164,13 @@ Errors come back as `{ "error": { "kind": "...", "message": "..." } }`, where `m
 
 - [app/page.tsx](app/page.tsx): landing, with the in-place upload
 - [app/result/page.tsx](app/result/page.tsx): the recorded demo result
-- [app/components/](app/components/): `Result` (slider, measured line, close-up, UV card), `Routine` (steps and bag), `Upload`
+- [app/components/](app/components/): `Result` (slider, measured line, close-up, UV card), `Routine` (steps and saved list), `Upload`
 - [app/api/future/route.ts](app/api/future/route.ts): the API above
 - [lib/](lib/): YouCam client, pipeline, evidence, UV, routine, on-screen copy, banned-word check
 
 ## Wording
 
-Everything on screen is an illustrative projection, not a prognosis. Scores are the model's readings of renders. The products are fictional, and checkout places no order. [lib/banned.ts](lib/banned.ts) lists words the copy and these docs may not use, and the tests enforce it.
+Everything on screen is an illustrative projection, not a prognosis. Scores are the model's readings of renders. Products are real Open Beauty Facts entries shown without prices (or six fictional ones with `FF_CATALOGUE=generic`), and Sunday Pharmacy is a made-up shop that sells nothing. [lib/banned.ts](lib/banned.ts) lists words the copy and these docs may not use, and the tests enforce it.
 
 ## Licenses and credits
 

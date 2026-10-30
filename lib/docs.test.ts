@@ -30,6 +30,7 @@ function envVarsRead(): string[] {
     ...sourceFiles("lib").filter((f) => dirname(f) === "lib"),
     ...sourceFiles("app"),
     ...sourceFiles("scripts"),
+    ...sourceFiles("store"),
   ];
   const names = new Set<string>();
   for (const f of files)
@@ -48,6 +49,16 @@ describe("README env vars", () => {
   test("mentions every env var the code reads", () => {
     expect(vars.filter((v) => !README.includes(v))).toEqual([]);
   });
+});
+
+describe("README store sections", () => {
+  for (const heading of [
+    "## Run it in a store (WooCommerce, two commands)",
+    "## Add it to your own store in two lines",
+  ])
+    test(`has the heading "${heading}"`, () => {
+      expect(README).toContain(heading);
+    });
 });
 
 describe("README credits and citations", () => {

@@ -7,60 +7,63 @@ A 2 to 2.5 minute walkthrough for a live presenter or the demo video. It needs n
 - Run `bun install`, then `bun run dev`, and open http://localhost:3000 in a desktop-width window.
 - No `.env` is needed. The demo face is a public-domain StyleGAN2 image; the person does not exist ([fixtures/LICENSE.txt](../fixtures/LICENSE.txt)).
 - The numbers below are the recorded ones from [fixtures/demo/result.json](../fixtures/demo/result.json). The UV card shows a recorded Nambour reading of 7.8.
+- The product is the first SPF 50 cream in [fixtures/products.json](../fixtures/products.json), a real product from Open Beauty Facts. Below it is called "the product"; read its brand and name off the screen. For a video with no brand on screen, start the server with the generic catalogue (`FF_CATALOGUE=generic`).
 
 ## Script
 
-**1. Landing (0:00 to 0:15)**
+**1. Landing (0:00 to 0:10)**
 
 - Show: the headline **Meet yourself at 45. Twice.** and the pill **YouCam Skin AI**.
-- Say: "Future Face shows you two faces of yourself, years from now. One kept living as now. The other wore sunscreen every day. Same face, same frame, measured by the same model."
+- Click: **See it in a store**.
+- Say: "Future Face shows you two faces of yourself, years from now. One kept living as now, the other wore sunscreen every day. And it lives where people buy sunscreen: on the product page."
 
-**2. How it works (0:15 to 0:30)**
+**2. The store product page (0:10 to 0:25)**
 
-- Click: **How it works** in the top bar. Point at the three cards: **AI Aging Generator**, **AI Skin Simulation**, **AI Skin Analysis**.
-- Say: "One selfie, three YouCam APIs in a row. The AI Aging Generator projects the face ten and twenty years on. AI Skin Simulation takes that same frame and applies daily sunscreen. AI Skin Analysis reads both renders, so the gap becomes numbers."
-- Then scroll back up.
+- Show: **Sunday Pharmacy** with the pill **Store preview**, the product photo, its name, and **Price set by the store**.
+- Point at: the pill **See your face in 20 years with SPF 50** under the buy area, and the aside **Add this to your store in two lines**.
+- Say: "Sunday Pharmacy is a made-up shop. The product is real, with data and photo from Open Beauty Facts. A store adds Future Face with two lines of HTML: a script and a div with the barcode."
 
-**3. Open the result (0:30 to 0:45)**
+**3. Open the result (0:25 to 0:40)**
 
-- Click: **See your two futures**.
-- Show: the pills **Demo face**, **Age read today 38** and **Nambour · UV 7.8**, and the title **You at 58. Twice.**
-- Say: "This is a recorded live run on a face that does not exist. The Aging Generator read her as 38. For twenty years on it returns preset ages, so we pick the nearest frame, and the caption says which one: res_age 58 for target 58."
+- Click: **See your face in 20 years with SPF 50**. A window opens over the store page, on **Try this SPF on your face.**: a shopper can drop a selfie, type a city and press **Show my two futures** right there.
+- Scroll to **Or see it on our demo face**.
+- Show: the pills **Demo face**, **Age read today 38** and **Nambour · UV 7.8**, the title **You at 58. Twice.**, and the line **With** the product, next to the pill **SPF 50 covers a UV 7.8 day**.
+- Say: "A shopper can try it on their own selfie right on the product page. For the demo we scroll to a recorded live run on a face that does not exist. The YouCam AI Aging Generator read her as 38 and projected her twenty years on. And the result already knows the product she was looking at."
 
-**4. The slider (0:45 to 1:00)**
+**4. The slider (0:40 to 0:55)**
 
 - Do: drag the divider across the face, between **As you live now** and **With daily SPF**.
-- Say: "Left is the Aging Generator frame as she lives now. Right is the same frame through AI Skin Simulation, with spots, wrinkles and texture dialled to 0.24. The caption is on screen the whole time: illustrative projection, not a prognosis."
+- Say: "Left is the Aging Generator frame as she lives now. Right is the same frame through AI Skin Simulation, with spots, wrinkles and texture dialled to 0.24. The caption stays on screen: illustrative projection, not a prognosis."
 
-**5. Where 0.24 comes from (1:00 to 1:15)**
+**5. Where 0.24 comes from (0:55 to 1:10)**
 
 - Click: **Source** on the **Wrinkles** row. The card **Why this intensity · 0.24** opens.
-- Say: "Every intensity has a source. Hughes and colleagues, Annals of Internal Medicine 2013, ran a 4.5-year trial where daily sunscreen users showed 24% less skin aging than discretionary users. We put that 24% on the model's 0 to 1 scale as 0.24. The doi is right here."
+- Say: "Every intensity has a source. Hughes and colleagues, Annals of Internal Medicine 2013: in a 4.5-year trial, daily sunscreen users showed 24% less skin aging than discretionary users. That 24% becomes 0.24 on the model's scale."
 - Click anywhere outside the card to close it.
 
-**6. The measured line (1:15 to 1:35)**
+**6. The measured line (1:10 to 1:30)**
 
 - Show: the card **Read by AI Skin Analysis**, **The measured line**, **Higher = better-looking skin**.
 - Say: "AI Skin Analysis reads both renders. Wrinkles 71.2 to 79.1, texture 91.4 to 97.5, spots 96.4 to 98.8. Each number is the model's reading of a render, not a reading of you."
 
-**7. Change the horizon (1:35 to 1:45)**
+**7. Change the horizon (1:30 to 1:40)**
 
 - Click: **+10 yrs**, then **+20 yrs**.
-- Say: "Ten years on the gap is smaller, wrinkles plus 6.4. At twenty it is plus 7.9. Both faces and the numbers swap together."
+- Say: "Ten years on the gap is smaller, wrinkles plus 6.4. At twenty it is plus 7.9."
 
-**8. UV where you live (1:45 to 1:55)**
+**8. UV where you live (1:40 to 1:50)**
 
 - Show: the **UV today** card, **7.8**, **High UV**, **Nambour, Australia**, and **Weather data by Open-Meteo.com · CC BY 4.0**.
-- Say: "The sun is local. The UV index comes from Open-Meteo for your city. This recorded reading is from Nambour, Queensland, where the trial ran."
+- Say: "The sun is local: the UV index comes from Open-Meteo. This recorded reading is from Nambour, Queensland, where the trial ran."
 
-**9. Build the routine (1:55 to 2:10)**
+**9. The routine with this product (1:50 to 2:10)**
 
 - Click: **Build my SPF routine**. The view moves to **Your routine for UV 7.8**.
-- Say: "High UV, so SPF 50 every morning. Two finger lengths, about a quarter teaspoon, for face and neck, and a top-up every 2 hours outdoors. Three steps: **Morning**, **Midday top-up**, **Evening**."
+- Show: three steps, **Morning**, **Midday top-up**, **Evening**, with real product photos. **Morning** is the product from the store page, with **SPF 50 covers a UV 7.8 day** and **View on Open Beauty Facts**.
+- Say: "High UV, so SPF 50 every morning, and the product she was looking at covers it. A stick tops up at midday, a cleanser in the evening. Real products, no prices: the store sets those."
 
-**10. Bag and checkout (2:10 to 2:25)**
+**10. Save and back to the store (2:10 to 2:30)**
 
-- Click: **Add** on **Noon Fluid SPF 50**, then **Add** on **Glide Stick SPF 50**. Both buttons turn to **Added**; **Your bag** shows **2 items** and **Subtotal** €54.
-- Click: **Checkout**.
-- Show: the note **This is a demo store, so no order was placed and nothing was charged. The products are fictional.**
-- Say: "Two faces, measured, then a routine and a bag sized to the sun where you live. Future Face, built on the YouCam AI Aging Generator, AI Skin Simulation and AI Skin Analysis."
+- Click: **Save** on the **Midday top-up** product. It turns to **Saved**; **Your routine** shows **1 item**.
+- Click: **Close Future Face** (the round button, top right). The window closes and the store page is back.
+- Say: "Two faces, measured, then a routine sized to the sun where you live, right on the product page. Future Face, built on the YouCam AI Aging Generator, AI Skin Simulation and AI Skin Analysis."
