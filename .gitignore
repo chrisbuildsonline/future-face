@@ -5,6 +5,7 @@ dist/
 .DS_Store
 PLAN.md
 CLAUDE.md
+AGENTS.md
 .omc/
 .claude/
 design/refs/
