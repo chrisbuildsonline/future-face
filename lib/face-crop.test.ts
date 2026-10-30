@@ -2,19 +2,19 @@ import { describe, expect, test } from "bun:test";
 import { faceCropRect } from "./face-crop";
 
 describe("faceCropRect", () => {
-  test("centred 1400px face in 4000x3000 gives a 2000 square around it", () => {
+  test("centred 1400px face in 4000x3000 gives a 2333 square around it", () => {
     const r = faceCropRect({ width: 4000, height: 3000 }, { x: 1300, y: 900, width: 1400, height: 1400 })!;
-    expect(r.size).toBe(2000);
-    expect(r.x + r.size / 2).toBe(2000); // centred horizontally on the face
-    // centre sits ~10% of face height above the face centre (1600 - 140)
-    expect(r.y + r.size / 2).toBe(1460);
+    expect(r.size).toBe(2333); // 1400 / 0.6; the height term gives only 1960
+    expect(r.x).toBe(834); // centre 2000.5, on the face centre (2000)
+    // centre sits ~10% of face height above the face centre (1600 - 140 = 1460)
+    expect(r.y).toBe(294); // centre 1460.5
   });
 
   test("a face near a corner is clamped inside the image", () => {
     const r = faceCropRect({ width: 4000, height: 3000 }, { x: 20, y: 10, width: 700, height: 700 })!;
     expect(r.x).toBe(0);
     expect(r.y).toBe(0);
-    expect(r.size).toBe(1000);
+    expect(r.size).toBe(1167);
   });
 
   test("a tiny face grows the crop to minSize", () => {
@@ -24,11 +24,12 @@ describe("faceCropRect", () => {
 
   test("minSize growth is capped by the short side", () => {
     const r = faceCropRect({ width: 4000, height: 500 }, { x: 1900, y: 100, width: 600, height: 600 })!;
-    expect(r.size).toBe(500); // wants 857, only 500 fits
+    expect(r.size).toBe(500); // wants 1000, only 500 fits
   });
 
-  test("a face already filling 75% of the width returns null", () => {
-    expect(faceCropRect({ width: 2000, height: 2000 }, { x: 250, y: 400, width: 1500, height: 1500 })).toBeNull();
+  test("a face already filling 60% of the width returns null", () => {
+    expect(faceCropRect({ width: 2000, height: 2000 }, { x: 350, y: 400, width: 1200, height: 1200 })).toBeNull();
+    expect(faceCropRect({ width: 2000, height: 2000 }, { x: 350, y: 400, width: 1199, height: 1199 })).not.toBeNull();
   });
 
   test("an image with a short side under minSize returns null", () => {
@@ -41,6 +42,16 @@ describe("faceCropRect", () => {
     expect(r.size).toBeGreaterThanOrEqual(500);
     expect(r.y).toBeLessThanOrEqual(300 - 40);
     expect(r.y + r.size).toBeGreaterThanOrEqual(700 + 40);
+  });
+
+  test("the wide fixture's BlazeFace box gets head room: a square of at least 981 with a 10% margin", () => {
+    const face = { x: 430, y: 520, width: 589, height: 620 };
+    const r = faceCropRect({ width: 2400, height: 1600 }, face)!;
+    expect(r.size).toBeGreaterThanOrEqual(981);
+    expect(r.x).toBeLessThanOrEqual(face.x - face.width * 0.1);
+    expect(r.y).toBeLessThanOrEqual(face.y - face.height * 0.1);
+    expect(r.x + r.size).toBeGreaterThanOrEqual(face.x + face.width * 1.1);
+    expect(r.y + r.size).toBeGreaterThanOrEqual(face.y + face.height * 1.1);
   });
 
   test("random cases: integers, inside bounds, face stays inside the square when it fits", () => {

@@ -1,12 +1,11 @@
 // Browser-only: find the face with MediaPipe and crop the photo to it before upload (YouCam wants the face
 // at >= 60% of the width). Everything here fails soft: any problem means "upload the original as is".
 import type { FaceDetector } from "@mediapipe/tasks-vision";
-import { faceCropRect } from "@/lib/face-crop";
+import { faceCropRect, YOUCAM_MIN_FILL } from "@/lib/face-crop";
 
 // Served by the app (scripts/mediapipe-assets.ts copies them into public/), never from a CDN.
 const WASM_PATH = "/mediapipe/wasm";
 const MODEL_PATH = "/mediapipe/blaze_face_short_range.tflite";
-const YOUCAM_MIN_FILL = 0.6;
 
 let detector: Promise<FaceDetector> | null = null;
 
@@ -62,7 +61,7 @@ export async function cropToFace(file: File): Promise<File | null> {
       .sort((a, b) => (b.categories[0]?.score ?? 0) - (a.categories[0]?.score ?? 0))[0];
     const box = best?.boundingBox;
     // YouCam already takes a face at >= 60% of the width (the demo face reads ~60.5% here), so leave those
-    // alone; below that, faceCropRect crops to its 70% target for some margin.
+    // alone; below that, faceCropRect crops so the box is 60% of the side, with head room for the whole head.
     if (!box || box.width >= YOUCAM_MIN_FILL * bitmap.width) return null;
 
     const rect = faceCropRect(
