@@ -140,3 +140,86 @@ describe("routineFor", () => {
     expect(r.preferred).toBeNull();
   });
 });
+
+describe("routineFor concerns", () => {
+  const named = (code: string, name: string, kind: Kind, spf: number | null): Item => ({ ...item(code, kind, spf), name });
+  const CAT2: Item[] = [
+    named("plain", "Daily Lotion SPF 50", "cream", 50),
+    named("min30", "Mineral Lotion SPF 30", "cream", 30),
+    named("min50", "Zinc Mineral SPF 50", "cream", 50),
+    named("flu50", "Noon Fluid SPF 50", "fluid", 50),
+    named("stk", "Glide Stick SPF 50", "stick", 50),
+    named("w", "Cleansing Balm", "cleanser", null),
+  ];
+  const c = (spots: number, wrinkle: number, texture: number) => ({ spots, wrinkle, texture });
+
+  test("no concerns or null: unchanged, focus null", () => {
+    const base = routineFor(8, CAT2);
+    for (const none of [undefined, null]) {
+      const r = routineFor(8, CAT2, undefined, none);
+      expect(r).toEqual(base);
+      expect(r.focus).toBeNull();
+    }
+    expect(base.steps[0].product.code).toBe("plain");
+  });
+
+  // Skin Analysis raw_score: higher = better-looking skin, so the morning pick targets the LOWEST reading.
+  test("spots weakest -> a mineral/zinc/tint product that covers the day's spf", () => {
+    const r = routineFor(8, CAT2, undefined, c(20, 60, 70));
+    expect(r.steps[0].product.code).toBe("min50"); // min30 does not cover SPF 50
+    expect(r.focus).toEqual({ concern: "spots", score: 20 });
+    expect(r.steps[0].why).toContain("Spots read weakest, so a mineral tint.");
+    expect(routineFor(2, CAT2, undefined, c(20, 60, 70)).steps[0].product.code).toBe("min30"); // low uv: closest spf
+  });
+
+  test("texture weakest -> a light fluid", () => {
+    const r = routineFor(8, CAT2, undefined, c(90, 60, 40));
+    expect(r.steps[0].product.code).toBe("flu50");
+    expect(r.focus).toEqual({ concern: "texture", score: 40 });
+    expect(r.steps[0].why).toContain("Texture reads weakest, so a light fluid.");
+  });
+
+  test("wrinkle weakest -> a cream", () => {
+    const cat = [named("f", "Noon Fluid SPF 50", "fluid", 50), named("c", "Rich Cream SPF 50", "cream", 50)];
+    const r = routineFor(8, cat, undefined, c(90, 30, 40));
+    expect(r.steps[0].product.code).toBe("c");
+    expect(r.focus).toEqual({ concern: "wrinkle", score: 30 });
+    expect(r.steps[0].why).toContain("Lines read weakest, so a cream.");
+  });
+
+  test("face a at +30 (spots 63.4, wrinkle 21.6, texture 64.1) -> lines, not the best-looking texture", () => {
+    const cat = [named("f", "Noon Fluid SPF 50", "fluid", 50), named("c", "Rich Cream SPF 50", "cream", 50)];
+    const r = routineFor(8, cat, undefined, c(63.4, 21.6, 64.1));
+    expect(r.focus).toEqual({ concern: "wrinkle", score: 21.6 });
+    expect(r.steps[0].product.code).toBe("c");
+  });
+
+  test("no match falls back to the current pick: focus set, no clause", () => {
+    const cat = [named("c", "Rich Cream SPF 50", "cream", 50), named("s", "Mist SPF 50", "spray", 50)];
+    const r = routineFor(8, cat, undefined, c(90, 90, 10)); // no fluid
+    expect(r.steps[0].product.code).toBe("c");
+    expect(r.focus).toEqual({ concern: "texture", score: 10 });
+    expect(r.steps[0].why).not.toMatch(/weakest/);
+    expect(routineFor(8, [named("c", "Rich Cream SPF 30", "cream", 30)], undefined, c(0, 90, 90)).steps[0].why).not.toMatch(/weakest/);
+  });
+
+  test("a preferred product wins over the concern", () => {
+    const r = routineFor(8, CAT2, "plain", c(20, 60, 70));
+    expect(r.steps[0].product.code).toBe("plain");
+    expect(r.steps[0].why).not.toMatch(/weakest/);
+  });
+
+  test("ties for the lowest reading go spots, wrinkle, texture; concern wording stays plain", () => {
+    expect(routineFor(8, CAT2, undefined, c(50, 50, 50)).focus?.concern).toBe("spots");
+    expect(routineFor(8, CAT2, undefined, c(90, 50, 50)).focus?.concern).toBe("wrinkle");
+    expect(routineFor(8, CAT2, undefined, c(50, 90, 50)).focus?.concern).toBe("spots");
+    for (const k of [c(1, 80, 80), c(80, 1, 80), c(80, 80, 1)]) expect(findBannedWords(routineFor(8, CAT2, undefined, k))).toEqual([]);
+  });
+
+  test("generic catalogue: each concern gives a covering product", () => {
+    for (const k of [c(1, 80, 80), c(80, 1, 80), c(80, 80, 1)]) {
+      const r = routineFor(8, GENERIC, undefined, k);
+      expect(r.steps[0].product.spf).toBeGreaterThanOrEqual(50);
+    }
+  });
+});

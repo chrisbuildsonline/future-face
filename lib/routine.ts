@@ -15,12 +15,26 @@ export type Routine = {
   steps: RoutineStep[];
   preferred: Product | null;
   fit: { ok: boolean; line: string } | null;
+  /** The concern the model read weakest (lowest raw_score; higher = better-looking skin); null when no readings were given. */
+  focus: { concern: Concern; score: number } | null;
 };
+export type Concern = "spots" | "wrinkle" | "texture";
+export type Concerns = Record<Concern, number>;
 
 const AMOUNT = "Two finger lengths, about ¼ teaspoon, for face and neck";
 
-/** The day-sized routine built from a product catalogue. A kind the catalogue lacks drops its step; it never throws. */
-export function routineFor(uv: number, catalogue: Product[], prefer?: string | null): Routine {
+// Order is the tie-break when two concerns share the lowest reading. match picks the morning product for that concern.
+const CONCERNS: { key: Concern; match: (p: Product) => boolean; clause: string }[] = [
+  { key: "spots", match: (p) => /mineral|zinc|tint/i.test(p.name), clause: "Spots read weakest, so a mineral tint." },
+  { key: "wrinkle", match: (p) => p.kind === "cream", clause: "Lines read weakest, so a cream." },
+  { key: "texture", match: (p) => p.kind === "fluid", clause: "Texture reads weakest, so a light fluid." },
+];
+
+/** True when the product is the kind the concern's morning pick looks for. */
+export const fitsConcern = (p: Product, concern: Concern) => CONCERNS.some((c) => c.key === concern && c.match(p));
+
+/** The day-sized routine built from a product catalogue. A kind the catalogue lacks drops its step; it never throws. With the model's concern readings and no preferred product, the morning pick follows the weakest concern (lowest reading; higher = better-looking skin) when a covering product fits it. */
+export function routineFor(uv: number, catalogue: Product[], prefer?: string | null, concerns?: Concerns | null): Routine {
   const rounded = Number.isFinite(uv) && uv > 0 ? Math.round(uv * 10) / 10 : 0;
   const band = uvBand(rounded);
   const high = band === "high" || band === "very_high" || band === "extreme";
@@ -36,7 +50,11 @@ export function routineFor(uv: number, catalogue: Product[], prefer?: string | n
     list.filter((p) => p.spf! >= spf).reduce<Product | null>((best, p) => (best && best.spf! <= p.spf! ? best : p), null);
 
   const preferred = (prefer && catalogue.find((p) => p.code === prefer && p.kind !== "cleanser" && p.spf !== null)) || null;
-  const morning = preferred ?? closest(body) ?? closest(sun) ?? body[0] ?? sun[0] ?? null;
+  // Readings are raw_score, higher = better-looking skin, so target the lowest; a tie keeps the earlier concern.
+  const weakest = concerns ? CONCERNS.map((c) => ({ ...c, score: concerns[c.key] })).reduce((a, b) => (b.score < a.score ? b : a)) : null;
+  // The weakest concern's product among those that still cover the day; lowest spf wins, ties keep catalogue order.
+  const forConcern = !preferred && weakest ? closest(body.filter((p) => weakest.match(p))) : null;
+  const morning = preferred ?? forConcern ?? closest(body) ?? closest(sun) ?? body[0] ?? sun[0] ?? null;
   const rest = sun.filter((p) => p !== morning);
   const midday = closest(hold) ?? hold[0] ?? closest(body.filter((p) => p !== morning)) ?? rest[0] ?? morning;
   const evening = catalogue.find((p) => p.kind === "cleanser") ?? null;
@@ -54,7 +72,7 @@ export function routineFor(uv: number, catalogue: Product[], prefer?: string | n
       id: "morning",
       label: "Morning",
       product: morning,
-      why: `UV ${rounded} is ${word}, so start with SPF ${spf}. This one is SPF ${morning.spf}.`,
+      why: `UV ${rounded} is ${word}, so start with SPF ${spf}. This one is SPF ${morning.spf}.${forConcern && weakest ? ` ${weakest.clause}` : ""}`,
     });
   if (midday) steps.push({ id: "midday", label: "Midday top-up", product: midday, why: middayWhy });
   if (evening)
@@ -77,5 +95,6 @@ export function routineFor(uv: number, catalogue: Product[], prefer?: string | n
     steps,
     preferred,
     fit,
+    focus: weakest ? { concern: weakest.key, score: weakest.score } : null,
   };
 }
