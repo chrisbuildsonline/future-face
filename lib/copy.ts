@@ -1,10 +1,9 @@
 // All on-screen copy for the landing page. Non-medical wording only:
 // lib/copy.test.ts fails the build of the suite if a banned stem slips in.
+// Client components import this file, so it must not import lib/evidence (which reaches node:fs via lib/uv).
+// The dose numbers on the result come from FutureResult.dose, not from here.
 
-import { SPF_AGING_REDUCTION } from "./evidence";
 import type { ErrorKind } from "./youcam";
-
-const fewer = `${Math.round(SPF_AGING_REDUCTION * 100)}%`;
 
 export const brand = {
   name: "Future Face",
@@ -23,7 +22,7 @@ export const landing = {
     // no-break space: "30 years" never splits across lines on a phone
     title: "Meet yourself in 30 years. Twice.",
     titleAccent: "Twice.",
-    lead: "One face kept living as now. The other wore sunscreen every day in your city. See them side by side, measured, with the routine that closes the gap.",
+    lead: "One face kept living as now. The other wore sunscreen every day in your city. See them side by side, read by the same model, with the routine that closes the gap.",
     cta: "See your two futures",
     ctaNote: "Opens a recorded demo face. No upload, no account.",
     ctaAlt: "Or use your own selfie",
@@ -53,13 +52,13 @@ export const landing = {
       {
         n: "02",
         api: "AI Skin Simulation",
-        title: "An earlier frame, with daily SPF",
-        body: `The SPF face is the aging frame ${fewer} fewer years ahead, after the trial below. Skin Simulation adds a light finishing pass.`,
+        title: "The same frame, with daily SPF",
+        body: "Both faces start from that one frame. The SPF face goes through Skin Simulation at 0.24, from the 24% in the trial below, scaled by your city's UV today against the trial town's.",
       },
       {
         n: "03",
         api: "AI Skin Analysis",
-        title: "Both faces, measured",
+        title: "Both faces, read by one model",
         body: "Both renders are read by the same model, so the gap shows up as numbers, then as a routine sized to your sun.",
       },
     ],
@@ -102,17 +101,30 @@ export const result = {
   frame: {
     age: "Frame age",
     target: "Target age",
-    nearest: "The Aging Generator returns preset ages, so each face uses the nearest frame.",
-    method: `The SPF face is the aging frame ${fewer} fewer years ahead, because the trial found ${fewer} less skin aging with daily sunscreen. The trial measured skin texture, not years, so read this as an illustration.`,
+    both: "Both faces",
+    nearest: "The Aging Generator returns preset ages, so both faces use the nearest frame.",
+    method: "The SPF face is that same frame through Skin Simulation, at the dose below. The trial measured skin aging, not a render, so read this as an illustration.",
+  },
+  dose: {
+    eyebrow: "The SPF dose",
+    api: "AI Skin Simulation",
+    cite: "Hughes 2013",
+    trial: "24% less aging",
+    cityUv: "UV today in",
+    refUv: "UV in",
+    trialSite: "the trial site",
+    rounded: "rounded to 0.5",
+    intensity: "intensity",
+    sentence: "Skin Simulation at",
+    sentenceRounded: "rounded to",
   },
   measured: {
     eyebrow: "Read by AI Skin Analysis",
-    title: "The measured line",
+    title: "The model reading",
     higher: "Higher = better-looking skin",
     foot: "Each number is the model's own reading of that render (Skin Analysis raw_score, 0 to 100), not a reading of you.",
     labels: { wrinkle: "Wrinkles", texture: "Texture", spots: "Spots" } as Record<string, string>,
     order: ["wrinkle", "texture", "spots"],
-    sameFrame: "At this horizon both faces come from the same aging frame, so there is no gap to measure.",
     intensity: "SPF intensity",
     source: "Source",
   },
@@ -120,7 +132,7 @@ export const result = {
     eyebrow: "Why this intensity",
     stat: "24%",
     statLabel: "less skin aging with daily sunscreen",
-    how: `The SPF face is the aging frame ${fewer} fewer years ahead. Skin Simulation then gives it a finishing pass at this amount on spots, wrinkles and texture, on the model's 0 to 1 scale.`,
+    how: "Skin Simulation runs on the same aging frame as the other face, at this amount on spots, wrinkles and texture (the model's 0 to 1 scale): 0.24 at the trial site's UV, scaled by your city's UV today.",
     doiLabel: "doi",
     link: "Read the trial",
   },

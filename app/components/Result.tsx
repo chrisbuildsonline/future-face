@@ -50,7 +50,9 @@ function useSweep(setPos: (n: number) => void) {
   return stop;
 }
 
-function Compare({ h, label }: { h: Horizon; label: string }) {
+type CompareProps = { h: Horizon; label: string; dose: FutureResult["dose"]; citation: FutureResult["citation"] };
+
+function Compare({ h, label, dose, citation }: CompareProps) {
   const [pos, setPos] = useState(50);
   const stopSweep = useSweep(setPos);
   return (
@@ -99,26 +101,76 @@ function Compare({ h, label }: { h: Horizon; label: string }) {
         </span>
       </div>
       <figcaption className={s.caption}>
-        <span className={s.ages}>
-          <span className={s.ageNow}>
-            <span className={s.ageArm}>{c.slider.left}</span>
-            <b data-testid="frame-now">
-              {c.frame.age} {h.resAge}
-            </b>
+        <span className={s.shared}>
+          <span className={s.sharedArms}>
+            <span className={s.sharedDots} aria-hidden />
+            {c.frame.both}
           </span>
-          <span className={s.ageSpf}>
-            <span className={s.ageArm}>{c.slider.right}</span>
-            <b data-testid="frame-spf">
-              {c.frame.age} {h.spfResAge}
-            </b>
-          </span>
+          <b data-testid="frame-age">
+            {c.frame.age} {h.resAge}
+          </b>
         </span>
         <strong>{c.disclaimer}</strong>
         <span>
           {c.frame.target} {h.targetAge}. {c.frame.nearest} {c.frame.method}
         </span>
+        <Dose dose={dose} citation={citation} />
       </figcaption>
     </figure>
+  );
+}
+
+/** The SPF face's Skin Simulation intensity as an annotated formula: 0.24 x (city UV / Nambour UV, rounded) = intensity. */
+function Dose({ dose, citation }: { dose: FutureResult["dose"]; citation: FutureResult["citation"] }) {
+  const d = c.dose;
+  const trial = (dose.intensity / dose.ratio).toFixed(2); // 0.24: the ratio is what the city changes
+  const [cityUv, refUv, ratio, intensity] = [dose.cityUv.toFixed(1), dose.referenceUv.toFixed(1), dose.ratio.toFixed(1), dose.intensity.toFixed(2)];
+  const refLabel = `${dose.referenceCity}, ${d.trialSite}`;
+  return (
+    <span className={s.dose} data-testid="dose">
+      <span className={s.doseTop}>
+        <span className={`${s.pill} ${s.pillAccent}`}>{d.api}</span>
+        <span className={s.doseEyebrow}>{d.eyebrow}</span>
+        <a className={s.doseCite} href={`https://doi.org/${citation.doi}`} target="_blank" rel="noreferrer">
+          {d.cite}
+          <span aria-hidden> ↗</span>
+        </a>
+      </span>
+      <span className={s.srOnly} data-testid="dose-sentence">
+        {`${d.sentence} ${trial} × (UV ${cityUv} in ${dose.cityName} / UV ${refUv} in ${refLabel}, ${d.sentenceRounded} ${ratio}) = ${intensity}`}
+      </span>
+      <span className={s.formula} aria-hidden>
+        <span className={s.group}>
+          <span className={s.term}>
+            <b data-testid="dose-trial">{trial}</b>
+            <small>{d.trial}</small>
+          </span>
+          <span className={s.op}>×</span>
+          <span className={s.frac}>
+            <b data-testid="dose-city-uv">{cityUv}</b>
+            <small>
+              {d.cityUv} {dose.cityName}
+            </small>
+            <b data-testid="dose-ref-uv">{refUv}</b>
+            <small>
+              {d.refUv} {refLabel}
+            </small>
+          </span>
+        </span>
+        <span className={s.group}>
+          <span className={s.op}>≈</span>
+          <span className={s.term}>
+            <b data-testid="dose-ratio">{ratio}</b>
+            <small>{d.rounded}</small>
+          </span>
+          <span className={s.op}>=</span>
+          <span className={`${s.term} ${s.termResult}`}>
+            <b data-testid="dose-intensity">{intensity}</b>
+            <small>{d.intensity}</small>
+          </span>
+        </span>
+      </span>
+    </span>
   );
 }
 
@@ -160,11 +212,6 @@ function Measured({ h, settings, citation }: { h: Horizon; settings: FutureResul
         <span className={s.keyNow}>{c.slider.left}</span>
         <span className={s.keySpf}>{c.slider.right}</span>
       </p>
-      {h.sameFrame || rows.length === 0 ? (
-        <p className={s.sameFrame} data-testid="same-frame">
-          {c.measured.sameFrame}
-        </p>
-      ) : (
       <ul className={s.rows}>
         {rows.map((m) => {
           const label = c.measured.labels[m.key] ?? m.key;
@@ -212,7 +259,6 @@ function Measured({ h, settings, citation }: { h: Horizon; settings: FutureResul
           );
         })}
       </ul>
-      )}
       <p className={s.foot}>{c.measured.foot}</p>
     </article>
   );
@@ -408,7 +454,7 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
       ) : null}
 
       <div className={s.grid}>
-        <Compare h={h} label={labelOf(idx, h.years)} />
+        <Compare h={h} label={labelOf(idx, h.years)} dose={data.dose} citation={data.citation} />
         <Measured h={h} settings={data.settings} citation={data.citation} />
         <Closeup h={h} />
         {data.uv ? <UvCard uv={data.uv} /> : null}

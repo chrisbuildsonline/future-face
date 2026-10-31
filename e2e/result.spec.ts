@@ -2,6 +2,8 @@ import { mkdirSync } from "node:fs";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { errors as errorCopy, landing, result as copy, upload } from "../lib/copy";
 import { CITATION } from "../lib/evidence";
+import { demoResult } from "../lib/pipeline";
+import { recordedUv, type Uv } from "../lib/uv";
 
 mkdirSync("docs/screenshots", { recursive: true });
 
@@ -101,7 +103,7 @@ test("the source chip opens the Hughes 2013 citation with its doi", async ({ pag
   expect(errors).toEqual([]);
 });
 
-test("the two default faces are different images with different frame ages", async ({ page }) => {
+test("the two default faces are different renders of one shared aging frame", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/result");
   const now = page.getByTestId("face-now");
@@ -116,38 +118,68 @@ test("the two default faces are different images with different frame ages", asy
   expect(spfSrc).toBeTruthy();
   expect(nowSrc).not.toBe(spfSrc);
 
-  // each face is captioned with its own aging frame: now 66, SPF 58 on the demo face
-  const nowAge = page.getByTestId("frame-now");
-  const spfAge = page.getByTestId("frame-spf");
-  await expect(nowAge).toHaveText(`${copy.frame.age} 66`);
-  await expect(spfAge).toHaveText(`${copy.frame.age} 58`);
-  expect(await nowAge.textContent()).not.toBe(await spfAge.textContent());
+  // one caption for both faces: the same aging frame, 66 on the demo face at +30
+  await expect(page.getByTestId("frame-age")).toHaveText(`${copy.frame.age} 66`);
+  await expect(page.getByTestId("frame-age").locator("..")).toContainText(copy.frame.both);
+  await expect(page.getByTestId("frame-now")).toHaveCount(0);
+  await expect(page.getByTestId("frame-spf")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test("the horizon switch swaps both faces and the measured numbers", async ({ page }) => {
+test("the dose formula shows both UV readings, where they come from, and the intensity", async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto("/result");
+  const dose = page.getByTestId("dose");
+  await dose.scrollIntoViewIfNeeded();
+  await expect(dose).toBeVisible();
+  // the demo reads Nambour, the trial site, against itself: 0.24 x (7.8 / 7.8, rounded to 1.0) = 0.24
+  await expect(dose.getByTestId("dose-trial")).toHaveText("0.24");
+  await expect(dose.getByTestId("dose-city-uv")).toHaveText("7.8");
+  await expect(dose.getByTestId("dose-ref-uv")).toHaveText("7.8");
+  await expect(dose.getByTestId("dose-ratio")).toHaveText("1.0");
+  await expect(dose.getByTestId("dose-intensity")).toHaveText("0.24");
+  await expect(dose).toContainText("Nambour");
+  await expect(dose).toContainText(copy.dose.trialSite);
+  await expect(dose.getByRole("link", { name: /Hughes 2013/ })).toHaveAttribute("href", `https://doi.org/${CITATION.doi}`);
+  // the whole formula reads as one sentence to a screen reader
+  await expect(page.getByTestId("dose-sentence")).toHaveText(
+    /0\.24 × \(UV 7\.8 in Nambour \/ UV 7\.8 in Nambour, the trial site, rounded to 1\.0\) = 0\.24/,
+  );
+  expect(errors).toEqual([]);
+});
+
+test("the old method wording is gone from the landing and the result", async ({ page }) => {
+  for (const url of ["/", "/result"]) {
+    await page.goto(url);
+    const text = await page.locator("body").innerText();
+    expect(text).not.toMatch(/fewer years|measured line|earlier frame|finishing pass/i);
+  }
+  expect(copy.measured.title).toMatch(/model reading/i);
+  await expect(page.getByRole("heading", { name: copy.measured.title })).toBeVisible();
+});
+
+test("the horizon switch swaps both faces and the model readings", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/result");
   const now = page.getByTestId("face-now");
   const spf = page.getByTestId("face-spf");
   await expectLoaded(now);
 
-  // +30 is the default: wrinkles 21.6 -> 61.0, frames 66 (now) and 58 (SPF) for target 64
+  // +30 is the default: frame 66 for target 64, the SPF render at 0.24 (Nambour's own UV), wrinkles 21.6 -> 51.7
   await expect(now).toHaveAttribute("src", /now-30\.jpg/);
-  await expect(spf).toHaveAttribute("src", /spf-30\.jpg/);
+  await expect(spf).toHaveAttribute("src", /spf-30-024\.jpg/);
   await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("21.6");
-  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("61.0");
+  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("51.7");
   await expect(page.getByText(`${copy.frame.target} 64.`)).toBeVisible();
 
   const twenty = page.getByRole("button", { name: landing.visual.horizon[0] });
   await twenty.click();
   await expect(twenty).toHaveAttribute("aria-pressed", "true");
   await expect(now).toHaveAttribute("src", /now-20\.jpg/);
-  await expect(spf).toHaveAttribute("src", /spf-20\.jpg/);
+  await expect(spf).toHaveAttribute("src", /spf-20-024\.jpg/);
   await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("44.9");
-  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("78.6");
-  await expect(page.getByTestId("frame-now")).toHaveText(`${copy.frame.age} 55`);
-  await expect(page.getByTestId("frame-spf")).toHaveText(`${copy.frame.age} 51`);
+  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("65.6");
+  await expect(page.getByTestId("frame-age")).toHaveText(`${copy.frame.age} 55`);
   await expect(page.getByText(`${copy.frame.target} 54.`)).toBeVisible();
   await expectLoaded(now);
   await expectLoaded(spf);
@@ -233,31 +265,49 @@ test.describe("upload on the landing", () => {
     expect(errors).toEqual([]);
   });
 
-  test("when both arms share one aging frame, the measured card says so and shows no deltas", async ({ page, request }) => {
+  // The client POSTs to /api/future and the server then calls Open-Meteo, which a page route cannot reach.
+  // So the stub is exactly what the server answers without a key for that UV reading: demoResult(uv).
+  test("two cities with different UV get different SPF renders of the same frame", async ({ page }) => {
     const errors = collectErrors(page);
-    const demo = await (await request.get("/api/future")).json();
-    const last = demo.horizons[demo.horizons.length - 1];
-    const same = { ...last, spfResAge: last.resAge, sameFrame: true, measured: [] };
-    await page.route("**/api/future", (route) =>
-      route.request().method() === "POST"
-        ? route.fulfill({ json: { ...demo, horizons: [...demo.horizons.slice(0, -1), same] } })
-        : route.continue(),
-    );
-    await page.goto("/");
-    await page.getByLabel(upload.city).fill("Lisbon");
-    await page.getByLabel(upload.file).setInputFiles(selfie);
-    await page.getByRole("button", { name: upload.submit }).click();
+    const cities = [
+      { city: "Oslo", country: "Norway", uvMax: 3.9, ratio: "0.5", intensity: "0.12", file: /spf-30-012\.jpg/ },
+      { city: "Cairo", country: "Egypt", uvMax: 11.7, ratio: "1.5", intensity: "0.36", file: /spf-30-036\.jpg/ },
+    ];
+    const seen: { now: string | null; spf: string | null; frame: string | null }[] = [];
+    for (const c of cities) {
+      const uv: Uv = { ...recordedUv(), city: c.city, country: c.country, uvMax: c.uvMax, source: "live" };
+      await page.unrouteAll();
+      await page.route("**/api/future", (route) =>
+        route.request().method() === "POST"
+          ? route.fulfill({ json: { ...demoResult(uv), notice: errorCopy.no_key } })
+          : route.continue(),
+      );
+      await page.goto("/");
+      await page.getByLabel(upload.city).fill(c.city);
+      await page.getByLabel(upload.file).setInputFiles(selfie);
+      await page.getByRole("button", { name: upload.submit }).click();
 
-    await expectLoaded(page.getByTestId("face-now"));
-    await expect(page.getByTestId("same-frame")).toHaveText(copy.measured.sameFrame);
-    await expect(page.getByTestId("measured-wrinkle-now")).toHaveCount(0);
-    await expect(page.getByTestId("frame-now")).toHaveText(`${copy.frame.age} ${last.resAge}`);
-    await expect(page.getByTestId("frame-spf")).toHaveText(`${copy.frame.age} ${last.resAge}`);
-
-    // the other horizon still has two frames and its measured line
-    await page.getByRole("button", { name: landing.visual.horizon[0] }).click();
-    await expect(page.getByTestId("same-frame")).toHaveCount(0);
-    await expect(page.getByTestId("measured-wrinkle-now")).toBeVisible();
+      const now = page.getByTestId("face-now");
+      const spf = page.getByTestId("face-spf");
+      await expectLoaded(now);
+      await expectLoaded(spf);
+      await expect(spf).toHaveAttribute("src", c.file);
+      const dose = page.getByTestId("dose");
+      await expect(dose.getByTestId("dose-city-uv")).toHaveText(c.uvMax.toFixed(1));
+      await expect(dose.getByTestId("dose-ref-uv")).toHaveText("7.8");
+      await expect(dose.getByTestId("dose-ratio")).toHaveText(c.ratio);
+      await expect(dose.getByTestId("dose-intensity")).toHaveText(c.intensity);
+      await expect(dose).toContainText(c.city);
+      seen.push({
+        now: await now.getAttribute("src"),
+        spf: await spf.getAttribute("src"),
+        frame: await page.getByTestId("frame-age").textContent(),
+      });
+    }
+    // same aging frame and the same "as you live now" render; only the SPF render follows the dose
+    expect(seen[0].now).toBe(seen[1].now);
+    expect(seen[0].frame).toBe(seen[1].frame);
+    expect(seen[0].spf).not.toBe(seen[1].spf);
     expect(errors).toEqual([]);
   });
 });
