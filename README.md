@@ -23,7 +23,7 @@ bun install
 bun run dev
 ```
 
-Open http://localhost:3000 and click **See your two futures**. That opens `/result`, a recorded live run of all three YouCam APIs on a public-domain face made by StyleGAN ([File:Man_2.jpg](https://commons.wikimedia.org/wiki/File:Man_2.jpg) on Wikimedia Commons, {{PD-algorithm}}; the person does not exist, see [fixtures/LICENSE.txt](fixtures/LICENSE.txt)). Drag the divider, switch **+20 yrs** / **+30 yrs**, click **Source** on any row, then **Build my SPF routine**.
+Open http://localhost:3000 and click **See your two futures**. That opens `/result`, a recorded live run of all three YouCam APIs on a public-domain face made by StyleGAN ([File:Man_2.jpg](https://commons.wikimedia.org/wiki/File:Man_2.jpg) on Wikimedia Commons, {{PD-algorithm}}; the person does not exist, see [fixtures/LICENSE.txt](fixtures/LICENSE.txt)). A second recorded face with darker skin (also public domain, see [fixtures/LICENSE.txt](fixtures/LICENSE.txt)) is in [fixtures/demo-b/](fixtures/demo-b/); it has the +20 horizon only, served with `?face=b`. Drag the divider, switch **+20 yrs** / **+30 yrs**, click **Source** on any row, then **Build my SPF routine**.
 
 You need Bun. Next.js also needs a recent Node.js on the path.
 
@@ -100,7 +100,7 @@ LIVE_RUNS_MAX=5
 | `bun run docker:test` | Build the image, run unit tests, typecheck and e2e inside it, and fail unless all pass. Log lands in `test-results/docker-suite.log`. |
 | `bun run store` | Start the demo WooCommerce shop on http://localhost:8080 (needs Docker) |
 | `bun run store:down` | Stop the shop; its data is kept |
-| `bun run record` | Re-records [fixtures/demo/](fixtures/demo/) with one live run on the source face. Needs `YOUCAM_SECRET_KEY`; costs about 46 units (reuses a recorded aging step if present). The source face lives in `fixtures/source/`, which is git-ignored. |
+| `bun run record` | Re-records [fixtures/demo/](fixtures/demo/) with one live run on the source face. Needs `YOUCAM_SECRET_KEY`; costs about 46 units (reuses a recorded aging step if present). `bun run record -- --face b --src <image>` records the second demo face from scratch into [fixtures/demo-b/](fixtures/demo-b/) (about 150 units, resumable via `partial.json`; only +20 is recorded so far, and `bun run record -- --face b --finalize` rebuilds `result.json` from `partial.json` with no API call, keeping only fully recorded horizons). The source faces live in `fixtures/source/`, which is git-ignored. |
 | `bun run products` | Refetches the sunscreens and cleansers from Open Beauty Facts into [fixtures/products.json](fixtures/products.json) and `public/products/` (free, no key) |
 | `bun run record:uv` | Re-records today's Nambour UV reading into `fixtures/demo/uv.json` |
 

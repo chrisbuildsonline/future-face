@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { CITATION, INTENSITIES, simSettings, spfDose, type SpfDose } from "./evidence";
-import { loadDemo } from "./fixtures";
+import { loadDemo, type FaceId } from "./fixtures";
 import { cropToCenter, prepareForAging, prepareForSimulation } from "./image";
 import { recordedUv, type Uv } from "./uv";
 import { ageFace, analyzeSkin, downloadFrame, pickNearest, simulateSkin, YoucamError } from "./youcam";
@@ -33,6 +33,8 @@ export async function withCropLadder<T>(
 export type Measured = { key: string; analysisKey: string; now: number; spf: number; delta: number };
 export type FutureResult = {
   source: "live" | "demo";
+  /** Which recorded demo face; set on demo results only. */
+  face?: FaceId;
   notice?: string;
   input?: string;
   inputAge: number;
@@ -64,13 +66,13 @@ export function measuredLine(now: SkinAnalysis, spf: SkinAnalysis): Measured[] {
   return out;
 }
 
-const imageUrl = (name: string) => `/api/demo-image/${name}`;
-
-export function demoResult(uv: Uv | null = recordedUv()): FutureResult {
-  const d = loadDemo();
+export function demoResult(uv: Uv | null = recordedUv(), face: FaceId = "a"): FutureResult {
+  const imageUrl = (name: string) => `/api/demo-image/${name}${face === "a" ? "" : `?face=${face}`}`; // face a keeps the bare url so cached urls stay valid
+  const d = loadDemo(face);
   const dose = spfDose(uv);
   return {
     source: "demo",
+    face,
     input: imageUrl("input.jpg"),
     inputAge: d.inputAge,
     frames: d.frames,

@@ -80,6 +80,21 @@ describe("demoResult", () => {
   });
 });
 
+describe("demoResult face b", () => {
+  test("image urls carry ?face=b, face a keeps bare urls", () => {
+    const b = demoResult(recordedUv(), "b");
+    expect(b.face).toBe("b");
+    expect(b.horizons.map((h) => h.years)).toEqual([20]);
+    expect(b.inputAge).toBe(38);
+    const urls = [b.input!, ...b.horizons.flatMap((h) => [h.now.image, h.spf.image])];
+    for (const u of urls) expect(u).toMatch(/^\/api\/demo-image\/[\w.-]+\?face=b$/);
+    const a = demoResult();
+    expect(a.face).toBe("a");
+    expect(a.horizons).toHaveLength(2);
+    for (const u of [a.input!, ...a.horizons.flatMap((h) => [h.now.image, h.spf.image])]) expect(u).not.toContain("?");
+  });
+});
+
 describe("runLive", () => {
   // input 30: +20 -> frame 50; +30 -> frame 60, for both arms
   const frames = [30, 35, 40, 45, 50, 55, 60].map((resAge) => ({ resAge, url: `u${resAge}` }));

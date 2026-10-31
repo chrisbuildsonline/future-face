@@ -71,6 +71,19 @@ describe("GET /api/future", () => {
   });
 });
 
+describe("GET /api/future?face=", () => {
+  const face = async (q: string) => (await (await GET(new Request("http://x/api/future" + q))).json()).face;
+  test("b returns face b, invalid or missing falls back to a", async () => {
+    expect(await face("?face=b")).toBe("b");
+    expect((await (await GET(new Request("http://x/api/future?face=b"))).json()).horizons).toHaveLength(1);
+    expect(await face("?face=zzz")).toBe("a");
+    expect(await face("")).toBe("a");
+    const withCity = await (await GET(new Request("http://x/api/future?city=Lisbon&face=b"))).json();
+    expect(withCity.face).toBe("b");
+    expect(withCity.uv.city).toBe("Lisbon");
+  });
+});
+
 describe("POST /api/future", () => {
   test("no key -> demo result with the city's uv and a notice", async () => {
     const res = await post({ city: "Lisbon" });
@@ -150,6 +163,18 @@ describe("GET /api/demo-image/[name]", () => {
     expect(res.headers.get("content-type")).toBe("image/jpeg");
     expect(res.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
     expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(1000);
+  });
+
+  test("serves a face b image with ?face=b, 404s an unknown face", async () => {
+    const a = new Uint8Array(await (await get("now-20.jpg")).arrayBuffer());
+    const res = await demoImage(new Request("http://x/api/demo-image/now-20.jpg?face=b"), { params: Promise.resolve({ name: "now-20.jpg" }) });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+    expect(Buffer.from(await res.arrayBuffer()).equals(Buffer.from(a))).toBe(false);
+    const bad = await demoImage(new Request("http://x/api/demo-image/now-20.jpg?face=zzz"), { params: Promise.resolve({ name: "now-20.jpg" }) });
+    expect(bad.status).toBe(404);
+    const no30 = await demoImage(new Request("http://x/api/demo-image/now-30.jpg?face=b"), { params: Promise.resolve({ name: "now-30.jpg" }) });
+    expect(no30.status).toBe(404);
   });
 
   test("404s anything else", async () => {

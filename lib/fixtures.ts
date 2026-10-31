@@ -22,15 +22,23 @@ export type Demo = {
   settings: Record<string, number>;
 };
 
-const dir = () => path.join(process.cwd(), "fixtures", "demo");
+export const DEMO_FACES = ["a", "b"] as const;
+export type FaceId = (typeof DEMO_FACES)[number];
+export const isFace = (x: unknown): x is FaceId => DEMO_FACES.includes(x as FaceId);
 
-export function loadDemo(): Demo {
-  return JSON.parse(readFileSync(path.join(dir(), "result.json"), "utf8"));
+/** Face a lives in fixtures/demo, face b in fixtures/demo-b. */
+export const faceDir = (face: FaceId = "a") => {
+  if (!isFace(face)) throw new Error("unknown demo face");
+  return path.join(process.cwd(), "fixtures", face === "a" ? "demo" : `demo-${face}`);
+};
+
+export function loadDemo(face: FaceId = "a"): Demo {
+  return JSON.parse(readFileSync(path.join(faceDir(face), "result.json"), "utf8"));
 }
 
-/** Absolute path of a recorded image; only input.jpg and images named in result.json resolve. */
-export function demoImagePath(name: string): string {
-  const allowed = ["input.jpg", ...loadDemo().horizons.flatMap((h) => [h.now.image, ...h.spf.map((e) => e.image)])];
+/** Absolute path of a recorded image; only input.jpg and images named in that face's result.json resolve. */
+export function demoImagePath(name: string, face: FaceId = "a"): string {
+  const allowed = ["input.jpg", ...loadDemo(face).horizons.flatMap((h) => [h.now.image, ...h.spf.map((e) => e.image)])];
   if (!allowed.includes(name)) throw new Error("unknown demo image");
-  return path.join(dir(), name);
+  return path.join(faceDir(face), name);
 }

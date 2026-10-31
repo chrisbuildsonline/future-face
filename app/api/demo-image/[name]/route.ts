@@ -1,11 +1,13 @@
 import { readFile } from "node:fs/promises";
-import { demoImagePath } from "@/lib/fixtures";
+import { demoImagePath, isFace } from "@/lib/fixtures";
 
 export const runtime = "nodejs";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ name: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ name: string }> }) {
   try {
-    const bytes = await readFile(demoImagePath((await params).name));
+    const face = new URL(req.url).searchParams.get("face") ?? "a";
+    if (!isFace(face)) return new Response(null, { status: 404 });
+    const bytes = await readFile(demoImagePath((await params).name, face));
     return new Response(new Uint8Array(bytes), {
       headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=31536000, immutable" },
     });

@@ -1,5 +1,6 @@
 import { cityErrors, errors } from "@/lib/copy";
 import { spfDose } from "@/lib/evidence";
+import { isFace } from "@/lib/fixtures";
 import { demoResult, runLive } from "@/lib/pipeline";
 import { cleanCity, getUv, recordedUv, UvError, type Uv } from "@/lib/uv";
 import { hasYoucamKey, YoucamError, type ErrorKind } from "@/lib/youcam";
@@ -16,12 +17,15 @@ const fail = (status: number, kind: ErrorKind) => Response.json({ error: { kind,
 const cityFail = () => Response.json({ error: { kind: "city_not_found", message: cityErrors.city_not_found } }, { status: 400 });
 
 export async function GET(req: Request) {
-  const raw = new URL(req.url).searchParams.get("city");
-  if (raw === null) return Response.json(demoResult());
+  const params = new URL(req.url).searchParams;
+  const face = params.get("face") ?? "a";
+  const faceId = isFace(face) ? face : "a";
+  const raw = params.get("city");
+  if (raw === null) return Response.json(demoResult(recordedUv(), faceId));
   const city = cleanCity(raw);
   if (!city) return cityFail();
   const uv = await getUv(city).catch(() => recordedUv()); // any UV failure keeps the recorded reading
-  return Response.json(demoResult(uv));
+  return Response.json(demoResult(uv, faceId));
 }
 
 export async function POST(req: Request) {
