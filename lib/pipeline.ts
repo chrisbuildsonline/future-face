@@ -3,6 +3,7 @@ import { CITATION, INTENSITIES, simSettings, spfDose, type SpfDose } from "./evi
 import { loadDemo, type FaceId } from "./fixtures";
 import { HORIZON_YEARS } from "./horizons";
 import { cropToCenter, prepareForAging, prepareForSimulation } from "./image";
+import { itaOf } from "./skin-tone";
 import { recordedUv, type Uv } from "./uv";
 import { ageFace, analyzeSkin, downloadFrame, pickNearest, simulateSkin, YoucamError } from "./youcam";
 import type { Opts, SkinAnalysis } from "./youcam";
@@ -73,7 +74,7 @@ export const demoImageUrl = (name: string, face: FaceId = "a") => `/api/demo-ima
 export function demoResult(uv: Uv | null = recordedUv(), face: FaceId = "a"): FutureResult {
   const imageUrl = (name: string) => demoImageUrl(name, face);
   const d = loadDemo(face);
-  const dose = spfDose(uv);
+  const dose = spfDose(uv, d.tone);
   return {
     source: "demo",
     face,
@@ -107,11 +108,12 @@ export async function runLive(
   selfie: Uint8Array,
   deps: Deps = { ageFace, downloadFrame, simulateSkin, analyzeSkin },
   opts: Opts = {},
-  dose: SpfDose = spfDose(null),
+  uv: Uv | null = null,
 ): Promise<FutureResult> {
   const input = await prepareForAging(selfie).catch(() => {
     throw new YoucamError("decode_failed", "bad_format"); // sharp can't open it (garbage, HEIC)
   });
+  const dose = spfDose(uv, await itaOf(input)); // the dose follows the measured tone of the face crop
   const aged = await withCropLadder(input, prepareForAging, (b) => deps.ageFace(b, opts));
   if (aged.inputAge === undefined) throw new YoucamError("no_input_age", "no_face");
   const inputAge = aged.inputAge;

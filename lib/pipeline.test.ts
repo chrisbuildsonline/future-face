@@ -52,21 +52,28 @@ describe("demoResult", () => {
   test("uses a caller-supplied uv; a null uv keeps null but doses from the recorded reading", () => {
     const r = demoResult(null);
     expect(r.uv).toBeNull();
-    expect(r.dose.intensity).toBe(0.24);
+    expect(r.dose.intensity).toBe(0.12); // face a's brown tone halves the recorded dose
   });
-  test("the recorded Nambour uv gives the 0.24 entry, dose and settings", () => {
+  test("the recorded Nambour uv gives the dose from the face's stored tone, with its entry and settings", () => {
     const r = demoResult(recordedUv());
     const d = loadDemo();
-    expect(r.dose).toEqual(spfDose(recordedUv()));
-    expect(r.settings).toEqual({ spots: 0.24, wrinkle: 0.24, texture: 0.24 });
+    expect(r.dose).toEqual(spfDose(recordedUv(), d.tone));
+    expect(r.dose.tone).toEqual(d.tone);
+    expect(r.dose.intensity).toBe(0.12); // face a measures brown: factor 0.5 halves the Nambour dose
+    expect(r.settings).toEqual({ spots: 0.12, wrinkle: 0.12, texture: 0.12 });
     r.horizons.forEach((h, i) => {
-      expect(h.spf.image).toBe(`/api/demo-image/${d.horizons[i].spf.find((e) => e.intensity === 0.24)!.image}`);
+      expect(h.spf.image).toBe(`/api/demo-image/${d.horizons[i].spf.find((e) => e.intensity === 0.12)!.image}`);
     });
+  });
+  test("face b doses from its own tone", () => {
+    const r = demoResult(recordedUv(), "b");
+    expect(r.dose.tone).toEqual(loadDemo("b").tone);
+    expect(r.dose.intensity).toBe(0.24); // intermediate x0.75 at ratio 1 ties up to 1
   });
   test("uvs that map to different steps give different spf images and settings", () => {
     const uv = (uvMax: number) => ({ ...recordedUv(), uvMax });
     const low = demoResult(uv(3.9));
-    const high = demoResult(uv(15.6));
+    const high = demoResult(uv(31.2)); // x2 uv ratio 4, x0.5 tone -> 2
     expect(low.dose.intensity).toBe(0.12);
     expect(high.dose.intensity).toBe(0.48);
     expect(high.settings).toEqual({ spots: 0.48, wrinkle: 0.48, texture: 0.48 });
@@ -136,7 +143,8 @@ describe("runLive", () => {
       expect(h).not.toHaveProperty("spfResAge");
       expect(h).not.toHaveProperty("sameFrame");
     }
-    expect(r.dose).toEqual(spfDose(null));
+    expect(r.dose.tone?.band).toBe("very_light");
+    expect(r.dose).toEqual(spfDose(null, r.dose.tone));
     expect(r.settings).toEqual({ spots: 0.24, wrinkle: 0.24, texture: 0.24 });
     for (const h of r.horizons) {
       expect(h.spf.image.startsWith("data:image/jpeg;base64,")).toBe(true);
@@ -171,12 +179,13 @@ describe("runLive", () => {
         return an({ wrinkle: 70, age_spot: 80, texture: 90 }, 40);
       },
     });
-    const dose = spfDose({ ...recordedUv(), uvMax: 11.7 });
-    const r = await runLive(await mk(800, 800), d, {}, dose);
+    const uv = { ...recordedUv(), uvMax: 11.7 };
+    const r = await runLive(await mk(800, 800), d, {}, uv);
     expect(log.downloads.sort()).toEqual(["u50", "u60"]);
     expect(simulated.sort()).toEqual(["u50", "u60"]); // simulation runs on the same frames the now arm shows
     expect(settings).toEqual(Array(2).fill({ spots: 0.36, wrinkle: 0.36, texture: 0.36 }));
-    expect(r.dose).toBe(dose);
+    expect(r.dose.tone?.band).toBe("very_light"); // the flat grey test image measures as the fair-skin anchor
+    expect(r.dose).toEqual(spfDose(uv, r.dose.tone));
     expect(r.settings).toEqual({ spots: 0.36, wrinkle: 0.36, texture: 0.36 });
     expect(r.horizons.map((h) => h.resAge)).toEqual([50, 60]);
     expect(analysed).toHaveLength(4); // now + spf per horizon

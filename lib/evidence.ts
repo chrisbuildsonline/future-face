@@ -1,4 +1,5 @@
 // Skin-simulation intensity for the "daily SPF" arm, with the study it comes from.
+import type { SkinTone } from "./tone";
 import { recordedUv, type Uv } from "./uv";
 
 /** Skin Simulation intensity at the trial site's UV (Hughes 2013: 24% less skin aging with daily sunscreen). */
@@ -22,15 +23,19 @@ export type SpfDose = {
   referenceUv: number;
   referenceCity: "Nambour";
   referenceDate: string;
+  /** City UV / Nambour UV, before the tone factor and rounding. */
+  uvRatio: number;
+  tone: SkinTone | null;
   ratio: number;
   intensity: number;
 };
 
-/** Intensity = 0.24 x (city UV / Nambour UV), the ratio rounded to the nearest 0.5 and kept within 0.5..2.5. A null city uses the recorded Nambour reading. */
-export function spfDose(cityUv: Uv | null): SpfDose {
+/** Intensity = 0.24 x (city UV / Nambour UV x skin tone factor), the ratio rounded to the nearest 0.5 and kept within 0.5..2.5. A null city uses the recorded Nambour reading; a null tone is factor 1. */
+export function spfDose(cityUv: Uv | null, tone: SkinTone | null = null): SpfDose {
   const ref = recordedUv();
   const city = cityUv ?? ref;
-  const half = Math.round(+((city.uvMax / ref.uvMax) * 2).toFixed(6)); // toFixed: 13.65 / 7.8 must tie to 3.5, not 3.4999999
+  const uvRatio = city.uvMax / ref.uvMax;
+  const half = Math.round(+(uvRatio * (tone?.factor ?? 1) * 2).toFixed(6)); // toFixed: 13.65 / 7.8 must tie to 3.5, not 3.4999999
   const ratio = Math.min(2.5, Math.max(0.5, half / 2));
   return {
     cityUv: city.uvMax,
@@ -38,6 +43,8 @@ export function spfDose(cityUv: Uv | null): SpfDose {
     referenceUv: ref.uvMax,
     referenceCity: "Nambour",
     referenceDate: ref.date,
+    uvRatio: round2(uvRatio),
+    tone,
     ratio,
     intensity: round2(TRIAL_INTENSITY * ratio),
   };
@@ -46,7 +53,7 @@ export function spfDose(cityUv: Uv | null): SpfDose {
 /** What goes to Skin Simulation for one request. */
 export const simSettings = (intensity: number) => ({ spots: intensity, wrinkle: intensity, texture: intensity });
 
-const basis = "Skin Simulation intensity = 0.24 (24% less skin aging with daily sunscreen, Hughes 2013) x (your UV / Nambour UV), the trial site";
+const basis = "Skin Simulation intensity = 0.24 (24% less skin aging with daily sunscreen, Hughes 2013) x (your UV / Nambour UV, the trial site) x a skin tone factor (1 for fair skin, lower for darker tones: a model assumption)";
 
 export const INTENSITIES = [
   { key: "spots", value: TRIAL_INTENSITY, analysisKey: "age_spot", citation: CITATION, basis },

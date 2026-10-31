@@ -65,7 +65,7 @@ describe("GET /api/future", () => {
     globalThis.fetch = (async () => new Response("no", { status: 500 })) as unknown as typeof fetch;
     const fb = await (await GET(new Request("http://x/api/future?city=Lisbon"))).json();
     expect(fb.uv.source).toBe("recorded");
-    expect(fb.dose.intensity).toBe(0.24);
+    expect(fb.dose.intensity).toBe(0.12); // recorded uv x face a's brown tone (0.5)
     const bad = await GET(new Request("http://x/api/future?city=%3Cb%3E"));
     expect(bad.status).toBe(400);
   });
@@ -140,7 +140,7 @@ describe("POST /api/future", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.uv.source).toBe("recorded");
-    expect(body.dose).toMatchObject({ cityName: "Nambour", ratio: 1, intensity: 0.24 });
+    expect(body.dose).toMatchObject({ cityName: "Nambour", uvRatio: 1, ratio: 0.5, intensity: 0.12 }); // face a's brown tone halves it
   });
 
   test("live cap -> 429 without calling YouCam", async () => {

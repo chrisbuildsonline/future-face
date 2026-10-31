@@ -63,6 +63,36 @@ describe("spfDose", () => {
     expect(d.referenceDate).toBe(rec.date);
   });
 
+  describe("skin tone", () => {
+    const tone = (factor: number) => ({ ita: 0, band: "tan" as const, factor });
+    test("no tone behaves as before and reports the unrounded uv ratio", () => {
+      const d = spfDose(at(13.65));
+      expect(d.tone).toBeNull();
+      expect(d.uvRatio).toBe(1.75);
+      expect(d.ratio).toBe(2);
+      expect(spfDose(at(10)).uvRatio).toBe(1.28);
+    });
+    test("factor 1 changes nothing", () => {
+      expect(spfDose(at(11.7), tone(1)).intensity).toBe(0.36);
+    });
+    test("a lower factor scales the ratio before rounding and clamping", () => {
+      expect(spfDose(at(7.8), tone(0.75))).toMatchObject({ uvRatio: 1, ratio: 1 }); // 0.75 ties up to 1
+      expect(spfDose(at(5), tone(0.75))).toMatchObject({ uvRatio: 0.64, ratio: 0.5 }); // 0.48 -> 0.5
+    });
+    test("factor 0.5 halves the dose, never below 0.12", () => {
+      expect(spfDose(at(15.6), tone(0.5))).toMatchObject({ uvRatio: 2, ratio: 1, intensity: 0.24 });
+      expect(spfDose(at(7.8), tone(0.5))).toMatchObject({ ratio: 0.5, intensity: 0.12 });
+      expect(spfDose(at(0), tone(0.5)).intensity).toBe(0.12);
+    });
+    test("every combination lands on a recorded step", () => {
+      for (const uv of [0, 2, 5, 7.8, 9, 11.7, 13.65, 30]) for (const f of [1, 0.75, 0.5]) expect(DOSE_STEPS).toContain(spfDose(at(uv), tone(f)).intensity);
+    });
+    test("the tone rides along on the dose", () => {
+      const t = tone(0.5);
+      expect(spfDose(at(7.8), t).tone).toBe(t);
+    });
+  });
+
   test("null city uv uses the recorded reading: ratio 1, 0.24", () => {
     const d = spfDose(null);
     expect(d).toMatchObject({ cityUv: rec.uvMax, cityName: "Nambour", ratio: 1, intensity: 0.24 });

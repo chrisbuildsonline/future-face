@@ -1,5 +1,4 @@
 import { cityErrors, errors } from "@/lib/copy";
-import { spfDose } from "@/lib/evidence";
 import { isFace } from "@/lib/fixtures";
 import { demoResult, runLive } from "@/lib/pipeline";
 import { cleanCity, getUv, recordedUv, UvError, type Uv } from "@/lib/uv";
@@ -56,7 +55,7 @@ export async function POST(req: Request) {
   if (liveRuns >= Number(process.env.LIVE_RUNS_MAX ?? 5)) return fail(429, "rate_limited");
   liveRuns++;
   try {
-    const result = await runLive(new Uint8Array(await selfie.arrayBuffer()), undefined, undefined, spfDose(uv));
+    const result = await runLive(new Uint8Array(await selfie.arrayBuffer()), undefined, undefined, uv);
     return Response.json({ ...result, uv });
   } catch (e) {
     if (!(e instanceof YoucamError)) return fail(500, "unknown");
