@@ -134,7 +134,7 @@
 }
 
 .statusAction:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .statusAction:focus-visible {
@@ -280,7 +280,7 @@
   padding: 12px 18px;
   border-radius: 18px;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: var(--t-small);
   font-weight: 600;
   line-height: 1.45;
@@ -294,6 +294,16 @@
   margin-top: 7px;
   border-radius: 50%;
   background: currentColor;
+}
+
+.errorText {
+  display: grid;
+  gap: 2px;
+  font-weight: 500;
+}
+
+.errorText b {
+  font-weight: 700;
 }
 
 .cta {

@@ -127,7 +127,7 @@
 }
 .countOn {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* ---------- page ---------- */
@@ -618,7 +618,7 @@
   transition: color var(--d-hover) var(--ease);
 }
 .woo:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* ---------- bag drawer: right-hand sheet on desktop, bottom sheet on a phone (as the routine's) ---------- */
@@ -779,7 +779,7 @@
   padding: 14px 16px;
   border-radius: var(--r-inner);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: var(--t-small);
   font-weight: 650;
 }

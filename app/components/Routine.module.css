@@ -321,7 +321,7 @@
   align-items: center;
 }
 .obf:hover {
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration-color: currentColor;
 }
 .add.addCart {
@@ -515,7 +515,7 @@
   border-radius: var(--r-pill);
   background: var(--surface);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
   font: inherit;
   font-size: var(--t-small);
   font-weight: 700;

@@ -11,6 +11,8 @@
   --ink-3: #a49d95;
   --hairline: rgba(23, 20, 15, 0.08);
   --accent: #bf4f28;
+  /* the accent as small text: 5.1:1 on --accent-soft, 6.3:1 on white (#bf4f28 is only 3.8:1 on the soft tint) */
+  --accent-text: #a3401f;
   --accent-soft: #f6e2d8;
   --accent-glow: #f4d3bf;
 
@@ -18,7 +20,7 @@
   --pill-neutral-bg: #ece7e1;
   --pill-neutral-fg: var(--ink-2);
   --pill-accent-bg: var(--accent-soft);
-  --pill-accent-fg: var(--accent);
+  --pill-accent-fg: var(--accent-text);
   --pill-good-bg: #e2eee4;
   --pill-good-fg: #2e6a43;
   --pill-watch-bg: #f7ebcf;
