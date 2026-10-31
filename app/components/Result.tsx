@@ -499,6 +499,9 @@ export function Result({ data: initial, faces = null, titleTag: Title = "h1", ca
   // only the horizons this face has recorded: nothing to tap that leads nowhere
   const offered = data.horizons.map((x) => x.years).sort((a, b) => a - b);
   const switcher = data.source === "demo" && faces?.length ? faces : null;
+  // YouCam out of units: the submit got the demo result. Kept from `initial` so a city chip swap keeps saying so.
+  const paused = initial.paused === true;
+  const notice = data.notice ?? (paused ? initial.notice : undefined);
   // the shown horizon's "as you live now" readings steer the routine's morning pick
   const concerns = concernsOf(h);
 
@@ -572,6 +575,11 @@ export function Result({ data: initial, faces = null, titleTag: Title = "h1", ca
                 {data.source === "demo" ? c.eyebrow.demo : c.eyebrow.live}
               </span>
             )}
+            {paused ? (
+              <span className={`${s.pill} ${s.pillAccent} ${s.pausedPill}`} data-testid="paused-pill">
+                {c.eyebrow.paused}
+              </span>
+            ) : null}
             <span className={s.today}>
               {data.input && !switcher ? <img src={data.input} alt="" className={s.avatar} /> : null}
               <span className={s.todayLabel}>{c.today}</span>
@@ -618,10 +626,10 @@ export function Result({ data: initial, faces = null, titleTag: Title = "h1", ca
         </div>
       </header>
 
-      {data.notice ? (
-        <p className={s.notice} role="status">
+      {notice ? (
+        <p className={s.notice} role="status" data-tone={paused ? "accent" : undefined}>
           <span className={s.noticeDot} aria-hidden />
-          {data.notice}
+          {notice}
         </p>
       ) : null}
 

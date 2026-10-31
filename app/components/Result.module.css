@@ -69,6 +69,17 @@
   background: currentColor;
 }
 
+/* "Live renders paused": accent tint with a small pause glyph instead of a dot */
+.pausedPill::before {
+  content: "";
+  flex: none;
+  box-sizing: border-box;
+  width: 7px;
+  height: 9px;
+  border-inline: 2px solid currentColor;
+  border-radius: 1px;
+}
+
 .srOnly {
   position: absolute;
   width: 1px;
@@ -502,6 +513,12 @@
   font-size: var(--t-small);
   font-weight: 600;
   line-height: 1.45;
+}
+
+/* the paused line sits under the accent "Live renders paused" pill: same soft accent tint, not the watch amber */
+.notice[data-tone="accent"] {
+  background: var(--pill-accent-bg);
+  color: var(--pill-accent-fg);
 }
 
 .noticeDot {

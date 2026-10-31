@@ -84,7 +84,8 @@ export const landing = {
 // The two-face result screen (demo at /result, live runs on the landing).
 export const result = {
   nav: { back: "Back", own: "Try your own selfie" },
-  eyebrow: { demo: "Demo face", live: "Your selfie" },
+  // paused: YouCam is out of units, so a submit got the demo result (status pill beside the Demo pill)
+  eyebrow: { demo: "Demo face", live: "Your selfie", paused: "Live renders paused" },
   titlePrefix: "You in",
   titleYears: "years.",
   titleAccent: "Twice.",
@@ -258,6 +259,8 @@ export const upload = {
   loading: "Three YouCam models run one after another. A live run usually takes one to two minutes, so keep this tab open.",
   elapsed: "elapsed",
   resultLabel: "Your result",
+  // under a submit error: the recorded demo result always works
+  demoLink: "See the demo face",
 } as const;
 
 // The store widget's modal (/result?embed=1): the shopper's own selfie first, the demo face below.
@@ -294,7 +297,8 @@ export const errors: Record<ErrorKind, string> = {
   bad_format: "We couldn't open that photo. Please try a JPG or PNG.",
   file_too_large: "That photo is over 10 MB. Please pick a smaller one.",
   low_quality: "We couldn't get a clear look at your face. Try a well-lit photo, facing the camera.",
-  insufficient_units: "We've run out of renders on our side for now. The demo face is ready to try in the meantime.",
+  // shown as the notice on the paused result (POST answers 200 with the demo result, paused: true)
+  insufficient_units: "Live renders are paused while our YouCam credits refill, so this is the demo face with your city's UV.",
   rate_limited: "Lots of people are trying this right now. Please try again in a minute.",
   auth: "Something's off on our side, so live photos aren't working right now. The demo face still works.",
   server_busy: "The imaging service hit a snag. Please try again.",
