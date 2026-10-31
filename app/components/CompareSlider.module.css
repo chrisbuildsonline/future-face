@@ -96,6 +96,12 @@
   pointer-events: none;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  transition: opacity var(--d-hover) var(--ease);
+}
+
+/* the divider is near this tag's side: its face is only a sliver (CompareSlider sets it) */
+.tag[data-faded] {
+  opacity: 0;
 }
 
 .tagLeft {

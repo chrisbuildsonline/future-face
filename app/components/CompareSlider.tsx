@@ -50,8 +50,28 @@ type Props = {
 export function CompareSlider({ now, spf, label, testId = "face", className = "" }: Props) {
   const [pos, setPos] = useState(50);
   const stopSweep = useSweep(setPos);
+  // How far in from its own side each corner tag reaches, as % of the frame: a tag fades once the divider
+  // gets that close, so it never sits over a sliver of its face (or across the divider).
+  const frame = useRef<HTMLDivElement>(null);
+  const [reach, setReach] = useState({ left: 0, right: 0 });
+  useEffect(() => {
+    const el = frame.current!;
+    const [l, r] = Array.from(el.querySelectorAll<HTMLElement>(`.${s.tag}`));
+    const ro = new ResizeObserver(() => {
+      const f = el.getBoundingClientRect();
+      const pct = (px: number) => ((px + 8) / f.width) * 100; // 8px of air past the tag
+      setReach({ left: pct(l.getBoundingClientRect().right - f.left), right: pct(f.right - r.getBoundingClientRect().left) });
+    });
+    [el, l, r].forEach((x) => ro.observe(x));
+    return () => ro.disconnect();
+  }, []);
   return (
-    <div className={`${s.frame} ${className}`} style={{ "--pos": `${pos}%` } as CSSProperties} onPointerDown={() => stopSweep.current()}>
+    <div
+      ref={frame}
+      className={`${s.frame} ${className}`}
+      style={{ "--pos": `${pos}%` } as CSSProperties}
+      onPointerDown={() => stopSweep.current()}
+    >
       <img key={`now-${now}`} data-testid={`${testId}-now`} className={s.face} src={now} alt={`${c.slider.left}, ${label}`} />
       <img
         key={`spf-${spf}`}
@@ -81,10 +101,10 @@ export function CompareSlider({ now, spf, label, testId = "face", className = ""
           <path d="M6 1 1 7l5 6M16 1l5 6-5 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      <span className={`${s.tag} ${s.tagLeft}`} aria-hidden>
+      <span className={`${s.tag} ${s.tagLeft}`} aria-hidden data-faded={pos < reach.left ? "" : undefined}>
         {c.slider.left}
       </span>
-      <span className={`${s.tag} ${s.tagRight}`} aria-hidden>
+      <span className={`${s.tag} ${s.tagRight}`} aria-hidden data-faded={100 - pos < reach.right ? "" : undefined}>
         {c.slider.right}
       </span>
     </div>
