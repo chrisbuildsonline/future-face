@@ -168,7 +168,7 @@ Errors come back as `{ "error": { "kind": "...", "message": "..." } }`, where `m
 
 - [app/page.tsx](app/page.tsx): landing, with the in-place upload
 - [app/result/page.tsx](app/result/page.tsx): the recorded demo result
-- [app/components/](app/components/): `Result` (slider, SPF dose formula, model reading, close-up, UV card), `Routine` (steps and saved list), `Upload`
+- [app/components/](app/components/): `CompareSlider` (the before/after slider, shared by the landing hero and the result), `Result` (slider card, SPF dose formula, model reading, close-up, UV card), `Routine` (steps and saved list), `Upload`
 - [app/api/future/route.ts](app/api/future/route.ts): the API above
 - [lib/](lib/): YouCam client, pipeline, evidence, UV, routine, on-screen copy, banned-word check
 

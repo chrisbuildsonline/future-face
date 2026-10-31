@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { errors as errorCopy, landing, result as copy, upload } from "../lib/copy";
+import { errors as errorCopy, landing, result as copy, routine as rc, upload } from "../lib/copy";
 import { CITATION } from "../lib/evidence";
 import { demoResult } from "../lib/pipeline";
 import { recordedUv, type Uv } from "../lib/uv";
@@ -212,6 +212,53 @@ for (const vp of viewports) {
     });
   });
 }
+
+test.describe("phone: the sticky routine bar and the slider", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  // true when the bar is showing and its box overlaps the compare figure's box
+  const covers = (page: Page) =>
+    page.evaluate(() => {
+      const bar = [...document.querySelectorAll("main button")].find((b) => b.textContent?.includes("Build my SPF routine"));
+      const fig = document.querySelector("main figure:has([data-testid='face-spf'])");
+      if (!bar || !fig) throw new Error("bar or figure missing");
+      const st = getComputedStyle(bar);
+      if (st.visibility === "hidden" || Number(st.opacity) < 0.05) return false;
+      const a = bar.getBoundingClientRect();
+      const b = fig.getBoundingClientRect();
+      return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    });
+
+  test("never covers the compare figure while it is in view, and shows once it has scrolled away", async ({ page }) => {
+    const errors = collectErrors(page);
+    await page.goto("/result");
+    await expectLoaded(page.getByTestId("face-spf"));
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
+
+    const figure = page.locator("main figure").filter({ has: page.getByTestId("face-spf") });
+    const { top, bottom } = await figure.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY };
+    });
+    // every scroll position while any of the figure is on screen
+    for (let y = 0; y < bottom; y += 120) {
+      await page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), y);
+      await expect.poll(() => covers(page), { message: `bar covers the figure at scrollY ${y}` }).toBe(false);
+    }
+    expect(top).toBeGreaterThan(0);
+
+    // past the figure: the bar is back in the thumb zone
+    await page.evaluate((y) => window.scrollTo({ top: y + 40, behavior: "instant" }), bottom);
+    const bar = page.getByRole("button", { name: rc.cta });
+    await expect(bar).toBeVisible();
+    await expect(bar).toBeInViewport();
+    await expect.poll(() => bar.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    await bar.click();
+    await expect(page.getByRole("heading", { name: new RegExp(rc.titlePrefix) })).toBeFocused();
+    expect(errors).toEqual([]);
+  });
+});
 
 test.describe("upload on the landing", () => {
   const selfie = "fixtures/demo/input.jpg";

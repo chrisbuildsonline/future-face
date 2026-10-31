@@ -1,0 +1,124 @@
+/* The before/after slider (DESIGN.md "Before/after slider"). The parent sizes the frame via className. */
+
+.frame {
+  position: relative;
+  border-radius: var(--r-inner);
+  overflow: hidden;
+  background: var(--canvas-deep);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--pos);
+  width: 2px;
+  transform: translateX(-1px);
+  background: #fff;
+  box-shadow: 0 0 12px rgba(23, 20, 15, 0.25);
+  pointer-events: none;
+}
+
+.range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  touch-action: pan-y;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 2px;
+  height: 100%;
+}
+
+.range::-moz-range-thumb {
+  width: 2px;
+  height: 100%;
+  border: 0;
+}
+
+.handle {
+  position: absolute;
+  top: 50%;
+  left: var(--pos);
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: var(--shadow-float);
+  pointer-events: none;
+  transition: transform var(--d-hover) var(--ease);
+}
+
+.range:active ~ .handle {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.range:focus-visible ~ .handle {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* corner tags; also used on the close-up crops */
+.tag {
+  position: absolute;
+  top: 16px;
+  padding: 7px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.tagLeft {
+  left: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+}
+
+.tagRight {
+  right: 16px;
+  background: rgba(246, 226, 216, 0.94);
+  color: var(--accent-text);
+}
+
+@media (max-width: 720px) {
+  .tag {
+    top: auto;
+    bottom: 14px;
+  }
+  .tagLeft {
+    left: 12px;
+  }
+  .tagRight {
+    right: 12px;
+  }
+}

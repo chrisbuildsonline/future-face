@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { landing, result as c, routine as rc } from "@/lib/copy";
 import type { FutureResult } from "@/lib/pipeline";
 import type { Uv } from "@/lib/uv";
 import { uvBand } from "@/lib/uv-band";
+import { CompareSlider } from "./CompareSlider";
+import t from "./CompareSlider.module.css";
 import s from "./Result.module.css";
 import { productLabel, type Product } from "@/lib/products";
 import { routineFor } from "@/lib/routine";
@@ -18,88 +20,47 @@ const pct = (n: number) => Math.max(0, Math.min(100, n));
 const signed = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.abs(n).toFixed(1)}`;
 const day = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
-/** The one-time 60% -> 40% -> 50% sweep that teaches the gesture (DESIGN.md, Motion). */
-function useSweep(setPos: (n: number) => void) {
-  const stop = useRef<() => void>(() => {});
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const keys = [50, 60, 40, 50];
+/**
+ * True while the bar's box overlaps the figure's box on screen: on a phone the routine bar is sticky to the
+ * bottom of the viewport, and it must never sit on the slider. Layout effect, so the first paint is right.
+ */
+function useCovering(bar: RefObject<HTMLElement | null>, figure: RefObject<HTMLElement | null>) {
+  const [covering, setCovering] = useState(false);
+  useLayoutEffect(() => {
     let raf = 0;
-    let start = 0;
-    const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
-    const tick = (t: number) => {
-      start ||= t;
-      const p = Math.min((t - start) / 1200, 1);
-      const seg = Math.min(Math.floor(p * 3), 2);
-      const f = ease(p * 3 - seg);
-      setPos(keys[seg] + (keys[seg + 1] - keys[seg]) * f);
-      if (p < 1) raf = requestAnimationFrame(tick);
+    const check = () => {
+      raf = 0;
+      const a = bar.current?.getBoundingClientRect();
+      const b = figure.current?.getBoundingClientRect();
+      setCovering(Boolean(a && b && a.height > 0 && a.top < b.bottom && b.top < a.bottom));
     };
-    const delay = window.setTimeout(() => {
-      raf = requestAnimationFrame(tick);
-    }, 500);
-    stop.current = () => {
-      window.clearTimeout(delay);
-      cancelAnimationFrame(raf);
+    const queue = () => {
+      raf ||= requestAnimationFrame(check);
     };
+    check();
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
     return () => {
-      window.clearTimeout(delay);
       cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", queue);
+      window.removeEventListener("resize", queue);
     };
-  }, [setPos]);
-  return stop;
+  }, [bar, figure]);
+  return covering;
 }
 
-type CompareProps = { h: Horizon; label: string; dose: FutureResult["dose"]; citation: FutureResult["citation"] };
+type CompareProps = {
+  h: Horizon;
+  label: string;
+  dose: FutureResult["dose"];
+  citation: FutureResult["citation"];
+  ref: RefObject<HTMLElement | null>;
+};
 
-function Compare({ h, label, dose, citation }: CompareProps) {
-  const [pos, setPos] = useState(50);
-  const stopSweep = useSweep(setPos);
+function Compare({ h, label, dose, citation, ref }: CompareProps) {
   return (
-    <figure className={`${s.card} ${s.compare}`}>
-      <div className={s.frame} style={{ "--pos": `${pos}%` } as CSSProperties} onPointerDown={() => stopSweep.current()}>
-        <img
-          key={`now-${h.years}`}
-          data-testid="face-now"
-          className={s.face}
-          src={h.now.image}
-          alt={`${c.slider.left}, ${label}`}
-        />
-        <img
-          key={`spf-${h.years}`}
-          data-testid="face-spf"
-          className={s.face}
-          src={h.spf.image}
-          alt={`${c.slider.right}, ${label}`}
-          style={{ clipPath: `inset(0 0 0 ${pos}%)` }}
-        />
-        <span className={s.divider} aria-hidden />
-        <input
-          type="range"
-          className={s.range}
-          min={0}
-          max={100}
-          step={1}
-          value={Math.round(pos)}
-          aria-label={c.slider.label}
-          aria-valuetext={`${c.slider.left} ${Math.round(pos)}%, ${c.slider.right} ${100 - Math.round(pos)}%`}
-          onChange={(e) => {
-            stopSweep.current();
-            setPos(Number(e.target.value));
-          }}
-        />
-        <span className={s.handle} aria-hidden>
-          <svg width="22" height="14" viewBox="0 0 22 14">
-            <path d="M6 1 1 7l5 6M16 1l5 6-5 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <span className={`${s.tag} ${s.tagLeft}`} aria-hidden>
-          {c.slider.left}
-        </span>
-        <span className={`${s.tag} ${s.tagRight}`} aria-hidden>
-          {c.slider.right}
-        </span>
-      </div>
+    <figure ref={ref} className={`${s.card} ${s.compare}`}>
+      <CompareSlider now={h.now.image} spf={h.spf.image} label={label} className={s.compareFrame} />
       <figcaption className={s.caption}>
         <span className={s.shared}>
           <span className={s.sharedArms}>
@@ -274,12 +235,12 @@ function Closeup({ h }: { h: Horizon }) {
       <p className={s.cardLead}>{c.closeup.lead}</p>
       <div className={s.zooms}>
         {[
-          { src: h.now.image, tag: c.slider.left, cls: s.tagLeft },
-          { src: h.spf.image, tag: c.slider.right, cls: s.tagRight },
+          { src: h.now.image, tag: c.slider.left, cls: t.tagLeft },
+          { src: h.spf.image, tag: c.slider.right, cls: t.tagRight },
         ].map((z) => (
           <div key={z.tag} className={s.zoom}>
             <img data-testid="closeup" src={z.src} alt={`${z.tag}, ${c.closeup.eyebrow}`} />
-            <span className={`${s.tag} ${z.cls}`} aria-hidden>
+            <span className={`${t.tag} ${z.cls} ${s.zoomTag}`} aria-hidden>
               {z.tag}
             </span>
           </div>
@@ -377,6 +338,10 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
     }
   }, [routineOpen]);
 
+  const figureRef = useRef<HTMLElement>(null);
+  const nextRef = useRef<HTMLDivElement>(null);
+  const covering = useCovering(nextRef, figureRef);
+
   const idx = Math.max(0, data.horizons.findIndex((x) => x.years === years));
   const h = data.horizons[idx];
   if (!h) return null;
@@ -454,14 +419,14 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
       ) : null}
 
       <div className={s.grid}>
-        <Compare h={h} label={labelOf(idx, h.years)} dose={data.dose} citation={data.citation} />
+        <Compare ref={figureRef} h={h} label={labelOf(idx, h.years)} dose={data.dose} citation={data.citation} />
         <Measured h={h} settings={data.settings} citation={data.citation} />
         <Closeup h={h} />
         {data.uv ? <UvCard uv={data.uv} /> : null}
       </div>
 
       {data.uv ? (
-        <div className={s.next}>
+        <div ref={nextRef} className={s.next} data-covering={covering ? "" : undefined}>
           <p className={s.nextNote}>{catalogue.some((p) => p.source === "generic") ? rc.ctaNoteGeneric : rc.ctaNote}</p>
           <button
             type="button"

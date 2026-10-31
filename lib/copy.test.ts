@@ -62,6 +62,20 @@ describe("lib/copy", () => {
     expect(findBannedWords(copy.routine)).toEqual([]);
   });
 
+  test("a photo with no face says so plainly, apart from the face-too-small copy", () => {
+    expect(copy.upload.noFace).toBe("We couldn't find a face in that photo");
+    expect(copy.upload.noFaceHint.length).toBeGreaterThan(0);
+    expect(`${copy.upload.noFace} ${copy.upload.noFaceHint}`).not.toMatch(/small/i);
+    expect(copy.errors.face_too_small).toMatch(/small/i);
+  });
+
+  test("the 404 page has a title, a line and both ways back", () => {
+    expect(copy.notFound.title.length).toBeGreaterThan(0);
+    expect(copy.notFound.lead.length).toBeGreaterThan(0);
+    expect(copy.notFound.demo.length).toBeGreaterThan(0);
+    expect(copy.notFound.store.length).toBeGreaterThan(0);
+  });
+
   test("contains none of the banned words in any exported string", () => {
     expect(findBannedWords(copy)).toEqual([]);
   });

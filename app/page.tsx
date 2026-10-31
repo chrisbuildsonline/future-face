@@ -2,8 +2,9 @@ import Link from "next/link";
 import { loadCatalogue } from "@/lib/catalogue";
 import { storeProduct } from "@/lib/products";
 import { brand, landing, upload } from "@/lib/copy";
+import { demoResult } from "@/lib/pipeline";
 import { StoreLink } from "./components/StoreLink";
-import { TwoFutureMark } from "./components/TwoFutureMark";
+import { CompareSlider } from "./components/CompareSlider";
 import { Upload } from "./components/Upload";
 import styles from "./page.module.css";
 
@@ -30,6 +31,38 @@ function Arrow() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+/** The real thing as the hero: the recorded demo face at +30 years, both futures on one slider. */
+function HeroCompare() {
+  const v = landing.visual;
+  const demo = demoResult();
+  const h = demo.horizons[demo.horizons.length - 1]; // +30, the default horizon
+  return (
+    <figure className={styles.heroFigure} data-testid="hero-compare">
+      <span className={styles.heroGlow} aria-hidden />
+      <div className={styles.heroCard}>
+        <CompareSlider now={h.now.image} spf={h.spf.image} label={v.alt} testId="hero" className={styles.heroFrame} />
+      </div>
+      <figcaption className={styles.srOnly}>{v.caption}</figcaption>
+      <div className={`${styles.chip} ${styles.chipToday}`} aria-hidden>
+        {demo.input ? <img src={demo.input} alt="" className={styles.chipAvatar} /> : null}
+        <span className={styles.chipLines}>
+          <span className={styles.chipLabel}>{v.today}</span>
+          <span className={styles.chipAges}>
+            <b>{demo.inputAge}</b>
+            <span className={styles.chipArrow}>→</span>
+            <b className={styles.chipLater}>{h.targetAge}</b>
+            <small>{v.later}</small>
+          </span>
+        </span>
+      </div>
+      <div className={`${styles.chip} ${styles.chipCite}`} aria-hidden>
+        <span className={styles.citeDot} />
+        {v.citationChip}
+      </div>
+    </figure>
   );
 }
 
@@ -60,7 +93,7 @@ export default function Home() {
             <p className={styles.lead}>{hero.lead}</p>
           </div>
           <div className={styles.heroVisual}>
-            <TwoFutureMark />
+            <HeroCompare />
           </div>
           <div className={styles.heroAction}>
             <Link href="/result" className={styles.cta}>

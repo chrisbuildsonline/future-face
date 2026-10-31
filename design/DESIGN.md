@@ -35,6 +35,7 @@ All tokens live as CSS variables in `app/globals.css`. Never hard-code a colour 
 | `--ink-3` | `#A49D95` | decoration only: axis ticks, the "as you live now" bar series (2.6:1, never for text) |
 | `--hairline` | `rgba(23,20,15,.08)` | the only line colour; dividers inside a card |
 | `--accent` | `#BF4F28` | **the one accent ("sun clay")**: links, selection, focus ring, the "with daily SPF" series, active horizon (4.8:1 on white) |
+| `--accent-text` | `#A3401F` | the accent as small text (pills, links, chips): 5.1:1 on `--accent-soft`, 6.3:1 on white. `--accent` is only 3.8:1 on the soft tint, so it stays for non-text accents and large serif display text |
 | `--accent-soft` | `#F6E2D8` | tint behind accent text (selected chip, API pill) |
 | `--accent-glow` | `#F4D3BF` | the sun glow in visuals only |
 
@@ -43,7 +44,7 @@ Status pills use tints, not new accents:
 | Pill | Background | Text | Example |
 |---|---|---|---|
 | neutral | `#ECE7E1` | `--ink-2` | "Demo face", "+20 yrs" |
-| accent | `--accent-soft` | `--accent` | "AI Skin Simulation", "Selected" |
+| accent | `--accent-soft` | `--accent-text` | "AI Skin Simulation", "Selected" |
 | good | `#E2EEE4` | `#2E6A43` | "Low UV" |
 | watch | `#F7EBCF` | `#87590F` | "High UV" |
 
@@ -140,13 +141,12 @@ Max line length 60ch for body, 22ch for display.
   - Eyebrow neutral pill, then the display title on 3 lines with one italic accent word.
   - Lead (one supporting line, `--t-lead`, 46ch).
   - Primary pill "See your two futures" + one muted line under it.
-  - Visual: a white card (aspect ~5:6) holding the **two-future mark** (`app/components/TwoFutureMark.tsx`):
-    a sun arc (UV gauge, sun dot at ~72%) concentric with a skin-tone orb split by the slider handle;
-    left half carries spots and grain ("as you live now"), right half is clean with a sheen ("with daily
-    SPF"). An honest SVG illustration, not a render. Corner tags at the top (as in ref 04), the
-    `+20 / +30 yrs` segmented control at the bottom centre. Two floating chips overlap its edges:
-    the UV scale chip (bottom-left) and the citation chip (upper right). A soft `--accent-glow`
-    radial behind the card.
+  - Visual: a white card (frame aspect 5:6) holding the **real comparison of the demo face** at +30
+    years: the recorded "as you live now" render and the SPF render at the demo's dose, on the same
+    working before/after slider as the result (`app/components/CompareSlider.tsx`, with its sweep, drag
+    and keyboard). Corner tags at the top (as in ref 04). Two floating chips overlap its edges: the
+    demo face today with its ages ("34 → 64 in 30 years", bottom-left) and the citation chip (upper
+    right). A soft `--accent-glow` radial behind the card.
 - After the action (later feature): the upload step replaces the hero visual in place: a white card with
   a dashed `--r-inner` drop zone ("Drop a selfie" + "Use the demo face" secondary), a city combobox with
   type-ahead, and the primary pill "Show my two futures" disabled until both are set.
@@ -158,8 +158,8 @@ Max line length 60ch for body, 22ch for display.
 **Phone (390×844).** One job: start.
 - Nav 56px: wordmark + "How it works" text link.
 - Title 56px on 2 lines ("Meet yourself in 30 years. / *Twice.*"), lead 17px, then the visual card full
-  width (aspect 1:1, the SVG crops top and bottom; the two floating chips are dropped, the tags and
-  horizon control stay inside the frame), then the primary pill full width, 64px tall. At 390×844 the
+  width (frame aspect 6:5 so the faces and the pill both fit the first screen; the two floating chips
+  are dropped, the tags move to the bottom of the frame), then the primary pill full width, 64px tall. At 390×844 the
   pill lands at the bottom of the first viewport (thumb zone). It is also `position: sticky;
   bottom: 16px` inside the hero, so on shorter phones it stays pinned to the bottom until the user
   scrolls past the hero. The muted note under the pill is hidden on phone.
@@ -187,7 +187,15 @@ Max line length 60ch for body, 22ch for display.
 **Phone.** One job: compare.
 - Slider fills the width (aspect 4:5), horizon control floating on the image top, tags at the bottom.
 - Under it, the measured line as a horizontal scroller of three stat cards (one concern each, numbers
-  56px), then the UV card. Primary pill pinned to the bottom: "Build my SPF routine".
+  56px), then the UV card. Primary pill pinned to the bottom: "Build my SPF routine". The pinned pill
+  never sits on the slider: while its box would overlap the compare figure it fades out (hidden), and
+  it comes back once the figure has scrolled past.
+
+### (d) 404
+
+`app/not-found.tsx`: the nav row, then one white card on the canvas: a neutral "Page not found" pill, an
+h2-size serif title with one italic accent word, a lead, the primary pill "See the demo result" (`/result`)
+and a secondary "Visit the store preview" (`/store`). A pale serif "404" and a sun glow in the card corner.
 
 ### (c) SPF routine + bag
 

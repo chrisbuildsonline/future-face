@@ -28,14 +28,13 @@ export const landing = {
     ctaAlt: "Or use your own selfie",
     store: "See it in a store",
   },
+  // The hero: the recorded demo face at +30, both futures on one slider.
   visual: {
-    label: "Illustration of the two-future slider",
-    leftTag: "As you live now",
-    rightTag: "With daily SPF",
+    caption: "The demo face in 30 years, as you live now and with daily SPF. An illustrative projection, not a prognosis.",
+    alt: "demo face in 30 years",
     horizon: ["+20 yrs", "+30 yrs"],
-    uvTitle: "UV index",
-    uvScale: ["Low", "Extreme"],
-    uvNote: "Your city's sun sets the scene",
+    today: "Demo face, age today",
+    later: "in 30 years",
     citationChip: "Effect sizes from a 4.5-year trial",
   },
   how: {
@@ -211,6 +210,9 @@ export const upload = {
   cropUndo: "Undo",
   cropFull: "Using your full photo",
   cropAgain: "Crop again",
+  // MediaPipe ran and found no face at all (a face that is there but small gets cropped instead).
+  noFace: "We couldn't find a face in that photo",
+  noFaceHint: "Try a clear, front-facing selfie in good light, with your whole face in the frame.",
   city: "Your city",
   cityPlaceholder: "Lisbon",
   cities: ["Lisbon", "Madrid", "London", "Stockholm", "Cape Town", "Sydney", "Brisbane", "Singapore", "Mexico City", "Los Angeles"],
@@ -229,6 +231,16 @@ export const embed = {
   lead: "A selfie and your city. See yourself in 30 years, as you live now and with this SPF every morning.",
   fallback: "Or see it on our demo face",
   fallbackNote: "A recorded run on a face that does not exist. Nothing to upload.",
+} as const;
+
+// app/not-found.tsx: any URL that is not a page.
+export const notFound = {
+  eyebrow: "Page not found",
+  title: "This page has no future.",
+  titleAccent: "no future.",
+  lead: "The link may be old or mistyped. The demo face and the store preview are one click away.",
+  demo: "See the demo result",
+  store: "Visit the store preview",
 } as const;
 
 export const cityErrors = {
