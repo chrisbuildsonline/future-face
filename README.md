@@ -79,7 +79,8 @@ LIVE_RUNS_MAX=5
 
 | Variable | Needed for | Notes |
 | --- | --- | --- |
-| `YOUCAM_SECRET_KEY` | Live runs | Sent as the Bearer token on every YouCam call. Without it, uploads return the demo with a notice. |
+| `YOUCAM_SECRET_KEY` | Live runs | Sent as the Bearer token on every YouCam call. Without it, uploads return the demo with a notice. `YOUCAM_API_KEY` is accepted as another name for it; if both are set, `YOUCAM_SECRET_KEY` is used. |
+| `PORT` | Optional | Port for `bun run start` (and `bun run dev`). Defaults to 3000. |
 | `YOUCAM_API_URL` | Optional | YouCam host. Defaults to `https://yce-api-01.makeupar.com`; an invalid URL falls back to the default. |
 | `LIVE_RUNS_MAX` | Optional | Live runs allowed per server process, default 5, to protect units. Every attempt counts; the count resets on restart. Past it, uploads get `429 rate_limited`. |
 | `FF_CATALOGUE` | Optional | Set to `generic` to use the six fictional products instead of the real ones in `fixtures/products.json`, so no brand names show. |
@@ -135,6 +136,8 @@ bun run dev     # this app on http://localhost:3000
 <script src="http://localhost:3000/widget.js" defer></script>
 <div data-future-face data-product="3600000000000" data-spf="50" data-cart='{"3600000000000":"/?add-to-cart=12"}'></div>
 ```
+
+The store preview page (`/store/<barcode>`) shows this snippet with the address you opened it on. The hosted copy is `https://future-face.5-78-152-178.sslip.io/widget.js`.
 
 - `data-product`: the product's barcode (8 to 14 digits).
 - `data-spf`: the product's SPF number.
