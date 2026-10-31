@@ -5,7 +5,7 @@ import type { FaceId } from "../lib/fixtures";
 import { demoResult } from "../lib/pipeline";
 import { storeProduct, type Product } from "../lib/products";
 
-// The demo face switch on /result: face a (two horizons) and face b (only +20 recorded).
+// The demo face switch on /result: face a (two horizons) and face b (only +20 recorded, so only +20 offered).
 
 mkdirSync("docs/screenshots", { recursive: true });
 
@@ -30,7 +30,6 @@ const reading = (face: FaceId, years: number) =>
     .measured.find((m) => m.key === "wrinkle")!;
 
 const [twentyLabel, thirtyLabel] = landing.visual.horizon;
-const missing = `+30 ${copy.horizonMissing}`;
 
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -41,7 +40,7 @@ for (const vp of viewports) {
   test.describe(`demo faces at ${vp.width}`, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
 
-    test("the face switch swaps renders and readings, and +30 is honest about face b", async ({ page }) => {
+    test("the face switch swaps renders and readings, and face b offers only the +20 it has", async ({ page }) => {
       const errors = collectErrors(page);
       await page.goto("/result");
       const main = page.locator("main");
@@ -59,8 +58,8 @@ for (const vp of viewports) {
       await expectLoaded(now);
       await expect(now).not.toHaveAttribute("src", /face=b/);
       await expect(thirty).toHaveAttribute("aria-pressed", "true");
-      await expect(thirty).toBeEnabled();
-      await expect(main.getByText(missing)).toHaveCount(0);
+      await expect(twenty).toHaveAttribute("aria-pressed", "false");
+      await expect(page.getByTestId("horizon-static")).toHaveCount(0);
       await expect(page.getByTestId("measured-wrinkle-now")).toHaveText(reading("a", 30).now.toFixed(1));
       await expect(group.locator("img")).toHaveCount(2);
       for (const img of await group.locator("img").all()) await expectLoaded(img);
@@ -80,10 +79,11 @@ for (const vp of viewports) {
       await expect(page.getByTestId("measured-wrinkle-now")).toHaveText(b20.now.toFixed(1));
       await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText(b20.spf.toFixed(1));
       await expect(main.getByText(copy.today).locator("..")).toContainText("38");
-      await expect(twenty).toHaveAttribute("aria-pressed", "true");
-      await expect(thirty).toBeDisabled();
-      await expect(thirty).toHaveAttribute("aria-pressed", "false");
-      await expect(main.getByText(missing)).toBeVisible();
+      // no +30 control at all (and no dead-end note): +20 is a static label, not a one-button switch
+      await expect(thirty).toHaveCount(0);
+      await expect(twenty).toHaveCount(0);
+      await expect(main.getByText(thirtyLabel, { exact: true })).toHaveCount(0);
+      await expect(page.getByTestId("horizon-static")).toHaveText(twentyLabel);
       await expect(main.getByRole("heading", { level: 1 })).toContainText("20");
       expect(await main.innerText()).not.toMatch(/NaN|undefined/);
 
@@ -98,7 +98,7 @@ for (const vp of viewports) {
       await expect(faceA).toHaveAttribute("aria-current", "true");
       await expect(thirty).toBeEnabled();
       await expect(thirty).toHaveAttribute("aria-pressed", "true");
-      await expect(main.getByText(missing)).toHaveCount(0);
+      await expect(page.getByTestId("horizon-static")).toHaveCount(0);
       await expect(now).not.toHaveAttribute("src", /face=b/);
       await expect(page.getByTestId("measured-wrinkle-now")).toHaveText(reading("a", 30).now.toFixed(1));
       await expectLoaded(now);
@@ -121,7 +121,8 @@ test("the switch works in the store widget's demo fallback and keeps the query",
   await expect(page).toHaveURL(/face=b/);
   await expect(fallback.getByTestId("face-now")).toHaveAttribute("src", /face=b/);
   await expectLoaded(fallback.getByTestId("face-spf"));
-  await expect(fallback.getByRole("button", { name: thirtyLabel })).toBeDisabled();
+  await expect(fallback.getByRole("button", { name: thirtyLabel })).toHaveCount(0);
+  await expect(fallback.getByTestId("horizon-static")).toHaveText(twentyLabel);
   expect(errors).toEqual([]);
 });
 

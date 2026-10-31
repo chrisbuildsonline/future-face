@@ -100,6 +100,17 @@ describe("demoResult face b", () => {
     expect(a.horizons).toHaveLength(2);
     for (const u of [a.input!, ...a.horizons.flatMap((h) => [h.now.image, h.spf.image])]) expect(u).not.toContain("?");
   });
+  test("a city uv picks the dose step on face b's recorded horizons", () => {
+    const at = (uvMax: number) => ({ ...recordedUv(), city: "Lima", uvMax, source: "live" as const });
+    const hot = demoResult(at(9.95), "b"); // 9.95/7.8 x0.75 = 0.96 -> ratio 1
+    expect(hot.dose.ratio).toBe(1);
+    expect(hot.dose.intensity).toBe(0.24);
+    for (const h of hot.horizons) expect(h.spf.image).toMatch(/spf-20-024\.jpg\?face=b$/);
+    const mild = demoResult(at(1.0), "b"); // 1.0/7.8 x0.75 -> ratio 0.5
+    expect(mild.dose.ratio).toBe(0.5);
+    expect(mild.dose.intensity).toBe(0.12);
+    for (const h of mild.horizons) expect(h.spf.image).toMatch(/spf-20-012\.jpg\?face=b$/);
+  });
 });
 
 describe("runLive", () => {

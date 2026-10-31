@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { landing, result as c, routine as rc } from "@/lib/copy";
-import { defaultYears, HORIZON_YEARS, horizonSlots } from "@/lib/horizons";
+import { defaultYears, HORIZON_YEARS } from "@/lib/horizons";
 import type { FutureResult } from "@/lib/pipeline";
 import type { Uv } from "@/lib/uv";
 import { uvBand } from "@/lib/uv-band";
@@ -405,6 +405,52 @@ function FaceSwitch({ faces, current }: { faces: FaceLink[]; current: string }) 
   );
 }
 
+type CityChipsProps = {
+  names: string[];
+  picked: string;
+  busy: string | null;
+  line: string;
+  failed: boolean;
+  onPick: (name: string) => void;
+};
+
+/** Demo only: the recorded city first, then a few others; one tap re-reads the dose at that city's UV today. */
+function CityChips({ names, picked, busy, line, failed, onPick }: CityChipsProps) {
+  const uid = useId();
+  return (
+    <div className={s.cities}>
+      <div className={s.cityGroup} role="group" aria-labelledby={`${uid}-c`}>
+        <span id={`${uid}-c`} className={s.citiesLabel}>
+          {c.cities.label}
+        </span>
+        {names.map((n) => (
+          <button
+            key={n}
+            type="button"
+            className={s.cityChip}
+            aria-pressed={n === picked}
+            aria-busy={n === busy || undefined}
+            onClick={() => onPick(n)}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      {/* one slot: the status line, or the error in its place (the status stays mounted as the live region) */}
+      <div className={s.cityLine}>
+        <p className={s.cityStatus} role="status" data-testid="city-status" data-hidden={failed ? "" : undefined}>
+          {line}
+        </p>
+        {failed ? (
+          <p className={s.cityError} role="alert">
+            {c.cities.error}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 type ResultProps = {
   data: FutureResult;
   /** The recorded demo faces to switch between; shown on demo results only. */
@@ -416,8 +462,18 @@ type ResultProps = {
   cart?: string[] | null;
 };
 
-export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, product = null, cart = null }: ResultProps) {
+export function Result({ data: initial, faces = null, titleTag: Title = "h1", catalogue, product = null, cart = null }: ResultProps) {
   const uid = useId();
+  // City chips (demo only): `data` is the result on screen, the recorded one until a city swaps it in.
+  // Result is keyed by face where it is rendered, so a face switch starts over from the recorded result.
+  const recordedCity = initial.uv?.city ?? "";
+  const [data, setData] = useState(initial);
+  const [picked, setPicked] = useState(recordedCity);
+  const [busyCity, setBusyCity] = useState<string | null>(null);
+  const [cityLine, setCityLine] = useState<string>(c.cities.hint);
+  const [cityFailed, setCityFailed] = useState(false);
+  const latestTap = useRef(0);
+  const cityCache = useRef(new Map<string, FutureResult>());
   const [years, setYears] = useState(() => defaultYears(data.horizons));
   const [routineOpen, setRoutineOpen] = useState(Boolean(product));
   const routineHead = useRef<HTMLHeadingElement>(null);
@@ -440,12 +496,58 @@ export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, 
   const h = data.horizons.find((x) => x.years === years) ?? data.horizons.find((x) => x.years === defaultYears(data.horizons));
   if (!h) return null;
   const labelOf = (y: number) => landing.visual.horizon[(HORIZON_YEARS as readonly number[]).indexOf(y)] ?? `+${y} yrs`;
-  const slots = horizonSlots(data.horizons);
-  const missing = slots.filter((x) => !x.available);
-  const noteId = `${uid}-hz-note`;
+  // only the horizons this face has recorded: nothing to tap that leads nowhere
+  const offered = data.horizons.map((x) => x.years).sort((a, b) => a - b);
   const switcher = data.source === "demo" && faces?.length ? faces : null;
   // the shown horizon's "as you live now" readings steer the routine's morning pick
   const concerns = concernsOf(h);
+
+  const cityNames =
+    initial.source === "demo" && initial.uv
+      ? [recordedCity, ...c.cities.names.filter((n) => n.toLowerCase() !== recordedCity.toLowerCase())]
+      : null;
+
+  // "Lima · UV 9.9 → same dose step (0.24)" or "London · UV 1.0 → dose 0.12", against the result shown before
+  const showCity = (name: string, next: FutureResult) => {
+    const dose = next.dose.intensity.toFixed(2);
+    const uv = (next.uv?.uvMax ?? next.dose.cityUv).toFixed(1);
+    const same = next.dose.intensity === data.dose.intensity;
+    setCityLine(`${name} · UV ${uv} → ${same ? `${c.cities.same} (${dose})` : `${c.cities.dose} ${dose}`}`);
+    setData(next);
+    setPicked(name);
+    setBusyCity(null);
+    setCityFailed(false);
+  };
+
+  const pickCity = async (name: string) => {
+    if (name === picked && busyCity === null) return;
+    const tap = ++latestTap.current; // only the latest tap wins; an older response that lands late is dropped
+    if (name === recordedCity) return showCity(name, initial);
+    const cached = cityCache.current.get(name);
+    if (cached) return showCity(name, cached);
+    setBusyCity(name);
+    try {
+      const res = await fetch(`/api/future?face=${encodeURIComponent(initial.face ?? "a")}&city=${encodeURIComponent(name)}`);
+      const next: FutureResult | null = res.ok ? await res.json() : null;
+      if (tap !== latestTap.current) return;
+      if (!next || !Array.isArray(next.horizons)) throw new Error("city failed");
+      if (next.uv?.source !== "live") {
+        // the route fell back to the recorded reading: say so, and show the recorded result under its own chip
+        setData(initial);
+        setPicked(recordedCity);
+        setBusyCity(null);
+        setCityFailed(false);
+        setCityLine(`${name}: ${c.cities.noLive} ${recordedCity} ${c.cities.noLiveTail}`);
+        return;
+      }
+      cityCache.current.set(name, next);
+      showCity(name, next);
+    } catch {
+      if (tap !== latestTap.current) return;
+      setBusyCity(null);
+      setCityFailed(true); // the previous result and selection stay
+    }
+  };
 
   const openRoutine = () => {
     clicked.current = true;
@@ -476,7 +578,7 @@ export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, 
               <b className={s.todayAge}>{data.inputAge}</b>
             </span>
             {data.uv ? (
-              <span className={`${s.pill} ${s.pillNeutral}`}>
+              <span className={`${s.pill} ${s.pillNeutral} ${s.uvPill}`} data-testid="uv-pill">
                 {data.uv.city} · UV {data.uv.uvMax.toFixed(1)}
               </span>
             ) : null}
@@ -499,26 +601,20 @@ export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, 
           <span className={s.horizonLabel} id={`${uid}-hz`}>
             {c.horizonLabel}
           </span>
-          <div className={s.segmented} role="group" aria-labelledby={`${uid}-hz`}>
-            {slots.map((x) => (
-              <button
-                key={x.years}
-                type="button"
-                className={s.segment}
-                aria-pressed={x.years === h.years}
-                disabled={!x.available}
-                aria-describedby={x.available ? undefined : noteId}
-                onClick={() => setYears(x.years)}
-              >
-                {labelOf(x.years)}
-              </button>
-            ))}
-          </div>
-          {missing.length ? (
-            <p id={noteId} className={s.horizonNote}>
-              {missing.map((x) => `+${x.years}`).join(", ")} {c.horizonMissing}
-            </p>
-          ) : null}
+          {offered.length > 1 ? (
+            <div className={s.segmented} role="group" aria-labelledby={`${uid}-hz`}>
+              {offered.map((y) => (
+                <button key={y} type="button" className={s.segment} aria-pressed={y === h.years} onClick={() => setYears(y)}>
+                  {labelOf(y)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            // one recorded horizon: a plain neutral pill (DESIGN.md status table, "+20 yrs"), not a one-button control
+            <span className={`${s.pill} ${s.pillNeutral} ${s.horizonStatic}`} aria-describedby={`${uid}-hz`} data-testid="horizon-static">
+              {labelOf(h.years)}
+            </span>
+          )}
         </div>
       </header>
 
@@ -527,6 +623,10 @@ export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, 
           <span className={s.noticeDot} aria-hidden />
           {data.notice}
         </p>
+      ) : null}
+
+      {cityNames ? (
+        <CityChips names={cityNames} picked={picked} busy={busyCity} line={cityLine} failed={cityFailed} onPick={pickCity} />
       ) : null}
 
       <div className={s.grid}>

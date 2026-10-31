@@ -90,8 +90,19 @@ export const result = {
   titleAccent: "Twice.",
   lead: "Left, the face as you live now. Right, the face with daily SPF. Drag the divider to compare.",
   horizonLabel: "Years ahead",
-  // after "+30": a recorded demo face can lack a horizon (face b ran out of YouCam units at +20)
-  horizonMissing: "not recorded for this face yet",
+  // the city chips on a demo result: one tap re-reads the dose at that city's UV today (GET /api/future?city=)
+  cities: {
+    label: "Try another city",
+    names: ["London", "Dubai", "Sydney", "Lima"],
+    hint: "Tap a city: the SPF dose follows its UV today.",
+    // "London · UV 1.0 → dose 0.12" when the step moved, "Lima · UV 9.9 → same dose step (0.24)" when it did not
+    dose: "dose",
+    same: "same dose step",
+    // "London: no live UV right now, so the recorded Nambour reading stays."
+    noLive: "no live UV right now, so the recorded",
+    noLiveTail: "reading stays.",
+    error: "That city did not load. The result is unchanged.",
+  },
   // the demo face switch: the group is named by eyebrow.demo, these name each round avatar link
   faces: { a: "Demo face 1", b: "Demo face 2" } as Record<string, string>,
   today: "Age read today",
