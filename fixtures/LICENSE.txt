@@ -17,6 +17,20 @@ plus resizing and re-encoding of the original image. fixtures/demo/input.jpg is
 the re-encoded copy of the source face. The scores in result.json come from AI
 Skin Analysis.
 
+Second demo face (fixtures/demo-b/)
+- Commons file page: https://commons.wikimedia.org/wiki/File:This_Person_Does_Not_Exist_example.jpg
+- Author: StyleGAN2 (generated, via thispersondoesnotexist.com), uploaded by Lallint
+- The person shown does not exist.
+- License ({{PD-Robot}} on the Commons file page, the same family as
+  {{PD-algorithm}}): public domain because it is the work of a computer
+  algorithm or artificial intelligence and does not contain sufficient human
+  authorship to support a copyright claim.
+- Every file in fixtures/demo-b/ is derived from that face: the output of
+  YouCam AI Aging Generator, AI Skin Simulation and AI Skin Analysis, run on the
+  record date given by "recordedAt" in fixtures/demo-b/result.json, plus resizing
+  and re-encoding of the original image. fixtures/demo-b/input.jpg is the
+  re-encoded copy of the source face. The UV reading stays fixtures/demo/uv.json.
+
 e2e/fixtures/wide-selfie.jpg is derived from the same public-domain face
 (fixtures/demo/input.jpg): scripts/wide-selfie.ts scales it, places it off-centre
 on a 2400x1600 canvas and fills the rest with a blurred, enlarged copy of itself.

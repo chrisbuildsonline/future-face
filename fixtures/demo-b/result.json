@@ -1,0 +1,166 @@
+{
+  "recordedAt": "2026-10-31T04:13:45.464Z",
+  "source": "fixtures/source/source-b.md",
+  "inputAge": 38,
+  "frames": [
+    12,
+    16,
+    20,
+    24,
+    27,
+    31,
+    35,
+    39,
+    43,
+    47,
+    51,
+    55,
+    58,
+    62,
+    66,
+    70
+  ],
+  "horizons": [
+    {
+      "years": 20,
+      "targetAge": 58,
+      "resAge": 58,
+      "now": {
+        "image": "now-20.jpg",
+        "analysis": {
+          "concerns": {
+            "age_spot": {
+              "raw_score": 96.42439270019531,
+              "ui_score": 92
+            },
+            "texture": {
+              "raw_score": 91.40157699584961,
+              "ui_score": 87
+            },
+            "wrinkle": {
+              "raw_score": 71.24791145324707,
+              "ui_score": 73
+            }
+          },
+          "skinAge": 43,
+          "overall": 84
+        }
+      },
+      "spf": [
+        {
+          "intensity": 0.12,
+          "image": "spf-20-012.jpg",
+          "analysis": {
+            "concerns": {
+              "texture": {
+                "raw_score": 95.88570594787598,
+                "ui_score": 93
+              },
+              "age_spot": {
+                "raw_score": 98.12235260009766,
+                "ui_score": 95
+              },
+              "wrinkle": {
+                "raw_score": 75.92381238937378,
+                "ui_score": 75
+              }
+            },
+            "skinAge": 43,
+            "overall": 87.66666666666667
+          }
+        },
+        {
+          "intensity": 0.24,
+          "image": "spf-20-024.jpg",
+          "analysis": {
+            "concerns": {
+              "texture": {
+                "raw_score": 97.25328087806702,
+                "ui_score": 95
+              },
+              "age_spot": {
+                "raw_score": 98.72920989990234,
+                "ui_score": 97
+              },
+              "wrinkle": {
+                "raw_score": 79.30107712745667,
+                "ui_score": 76
+              }
+            },
+            "skinAge": 41,
+            "overall": 89.33333333333333
+          }
+        },
+        {
+          "intensity": 0.36,
+          "image": "spf-20-036.jpg",
+          "analysis": {
+            "concerns": {
+              "texture": {
+                "raw_score": 97.90757894515991,
+                "ui_score": 96
+              },
+              "age_spot": {
+                "raw_score": 98.96862030029297,
+                "ui_score": 97
+              },
+              "wrinkle": {
+                "raw_score": 81.24332427978516,
+                "ui_score": 77
+              }
+            },
+            "skinAge": 41,
+            "overall": 90
+          }
+        },
+        {
+          "intensity": 0.48,
+          "image": "spf-20-048.jpg",
+          "analysis": {
+            "concerns": {
+              "texture": {
+                "raw_score": 98.1923758983612,
+                "ui_score": 96
+              },
+              "age_spot": {
+                "raw_score": 99.12818145751953,
+                "ui_score": 97
+              },
+              "wrinkle": {
+                "raw_score": 82.72969126701355,
+                "ui_score": 77
+              }
+            },
+            "skinAge": 41,
+            "overall": 90
+          }
+        },
+        {
+          "intensity": 0.6,
+          "image": "spf-20-060.jpg",
+          "analysis": {
+            "concerns": {
+              "age_spot": {
+                "raw_score": 99.22660827636719,
+                "ui_score": 98
+              },
+              "texture": {
+                "raw_score": 98.41538071632385,
+                "ui_score": 97
+              },
+              "wrinkle": {
+                "raw_score": 84.41094756126404,
+                "ui_score": 78
+              }
+            },
+            "skinAge": 41,
+            "overall": 91
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "trialIntensity": 0.24
+  }
+}
