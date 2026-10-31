@@ -97,6 +97,37 @@ for (const vp of viewports) {
   });
 }
 
+// A photo with no face in it at all: a plain warm-grey square, made here so no binary fixture is needed.
+const faceless = async () => ({
+  name: "no-face.jpg",
+  mimeType: "image/jpeg",
+  buffer: await sharp({ create: { width: 900, height: 900, channels: 3, background: "#d8cfc6" } }).jpeg().toBuffer(),
+});
+
+test("a photo with no face says so, never that the face is too small, and is not sent", async ({ page }) => {
+  const errors = collectErrors(page);
+  await open(page, errors);
+  await page.getByLabel(upload.city).fill("Lisbon");
+  await page.getByLabel(upload.file).setInputFiles(await faceless());
+
+  // Scoped to <main>: Next's app router mounts its own empty role="alert" route announcer on <body>.
+  const alert = page.locator("main").getByRole("alert");
+  await expect(alert).toContainText(upload.noFace, { timeout: 20_000 });
+  await expect(alert).toContainText(upload.noFaceHint);
+  expect(upload.noFace).toBe("We couldn't find a face in that photo");
+  await expect(page.locator("main form")).not.toContainText(/too small|a little small/i);
+  await expect(page.getByText(upload.cropDone)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: upload.submit })).toBeDisabled();
+  await expect(page.getByText("no-face.jpg", { exact: true })).toBeVisible();
+
+  // a photo with a face clears it again (the tile now reads "Change photo")
+  await page.getByLabel(upload.fileChange).setInputFiles(wide);
+  await expect(page.locator("main").getByRole("status")).toHaveText(upload.cropDone, { timeout: 20_000 });
+  await expect(alert).toHaveCount(0);
+  await expect(page.getByRole("button", { name: upload.submit })).toBeEnabled();
+  expect(errors).toEqual([]);
+});
+
 test("a photo where the face already fills the frame is uploaded as is, with no crop pill", async ({ page }) => {
   const errors = collectErrors(page);
   await open(page, errors);

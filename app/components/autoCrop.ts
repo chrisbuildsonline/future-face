@@ -47,8 +47,16 @@ function croppedName(name: string) {
   return `${base}-face.jpg`;
 }
 
-/** The photo cropped square around its best face, or null to upload the original. Never throws. */
-export async function cropToFace(file: File): Promise<File | null> {
+/**
+ * face: true when MediaPipe found one, false when it looked and found none, null when it could not look.
+ * file: the photo cropped square around the best face, or null to upload the original.
+ */
+export type FaceCrop = { face: boolean | null; file: File | null };
+
+const asIs = (face: boolean | null): FaceCrop => ({ face, file: null });
+
+/** Finds the face and crops to it. Never throws: any problem means "upload the original as is". */
+export async function cropToFace(file: File): Promise<FaceCrop> {
   let bitmap: ImageBitmap | null = null;
   try {
     // Upright pixels: EXIF rotation is applied here, so the box and the canvas agree.
@@ -62,25 +70,26 @@ export async function cropToFace(file: File): Promise<File | null> {
     const box = best?.boundingBox;
     // YouCam already takes a face at >= 60% of the width (the demo face reads ~60.5% here), so leave those
     // alone; below that, faceCropRect crops so the box is 60% of the side, with head room for the whole head.
-    if (!box || box.width >= YOUCAM_MIN_FILL * bitmap.width) return null;
+    if (!box) return asIs(false);
+    if (box.width >= YOUCAM_MIN_FILL * bitmap.width) return asIs(true);
 
     const rect = faceCropRect(
       { width: bitmap.width, height: bitmap.height },
       { x: box.originX, y: box.originY, width: box.width, height: box.height },
     );
-    if (!rect) return null;
+    if (!rect) return asIs(true);
 
     const canvas = document.createElement("canvas");
     canvas.width = rect.size;
     canvas.height = rect.size;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+    if (!ctx) return asIs(true);
     ctx.drawImage(bitmap, rect.x, rect.y, rect.size, rect.size, 0, 0, rect.size, rect.size);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    if (!blob) return null;
-    return new File([blob], croppedName(file.name), { type: "image/jpeg", lastModified: Date.now() });
+    if (!blob) return asIs(true);
+    return { face: true, file: new File([blob], croppedName(file.name), { type: "image/jpeg", lastModified: Date.now() }) };
   } catch {
-    return null;
+    return asIs(null);
   } finally {
     bitmap?.close();
   }

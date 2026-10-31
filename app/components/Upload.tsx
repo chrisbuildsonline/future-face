@@ -14,8 +14,9 @@ type State =
   | { kind: "error"; message: string }
   | { kind: "done"; data: FutureResult };
 
-// original = what the person picked; cropped = the face crop, if one was made; useCrop = not undone.
-type Photo = { original: File; cropped: File | null; useCrop: boolean };
+// original = what the person picked; cropped = the face crop, if one was made; useCrop = not undone;
+// noFace = MediaPipe looked and found no face (a face that is there but small gets cropped instead).
+type Photo = { original: File; cropped: File | null; useCrop: boolean; noFace: boolean };
 
 function Arrow() {
   return (
@@ -86,18 +87,19 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
 
   async function pick(f: File | null) {
     const id = ++pickId.current;
-    setPhoto(f ? { original: f, cropped: null, useCrop: true } : null);
+    setPhoto(f ? { original: f, cropped: null, useCrop: true, noFace: false } : null);
     setDetecting(!!f);
     if (!f) return;
-    const cropped = await cropToFace(f);
+    if (state.kind === "error") setState({ kind: "idle" }); // a new photo starts over
+    const { face, file: cropped } = await cropToFace(f);
     if (id !== pickId.current) return; // a newer photo was picked meanwhile
-    setPhoto({ original: f, cropped, useCrop: true });
+    setPhoto({ original: f, cropped, useCrop: true, noFace: face === false });
     setDetecting(false);
   }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!file || detecting || !city.trim()) return;
+    if (!file || detecting || photo?.noFace || !city.trim()) return;
     setState({ kind: "loading", started: Date.now() });
     const body = new FormData();
     body.set("selfie", file);
@@ -127,6 +129,7 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
   const fileId = `${uid}-file`;
   const hintId = `${uid}-hint`;
   const cropped = !detecting && photo?.cropped ? photo : null;
+  const noFace = !detecting && photo?.noFace;
   const statusText = detecting ? c.cropFinding : cropped ? (cropped.useCrop ? c.cropDone : c.cropFull) : "";
   const statusTone = detecting ? "busy" : cropped ? (cropped.useCrop ? "accent" : "neutral") : undefined;
   return (
@@ -207,12 +210,20 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
                 ))}
               </datalist>
             </label>
+            {noFace ? (
+              <p className={s.error} role="alert">
+                <span className={s.errorText}>
+                  <b>{c.noFace}</b>
+                  {c.noFaceHint}
+                </span>
+              </p>
+            ) : null}
             {state.kind === "error" ? (
               <p className={s.error} role="alert">
                 {state.message}
               </p>
             ) : null}
-            <button type="submit" className={s.cta} disabled={!file || detecting || !city.trim()}>
+            <button type="submit" className={s.cta} disabled={!file || detecting || noFace || !city.trim()}>
               <span>{c.submit}</span>
               <span className={s.ctaIcon}>
                 <Arrow />
