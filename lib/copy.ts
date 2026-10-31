@@ -90,6 +90,10 @@ export const result = {
   titleAccent: "Twice.",
   lead: "Left, the face as you live now. Right, the face with daily SPF. Drag the divider to compare.",
   horizonLabel: "Years ahead",
+  // after "+30": a recorded demo face can lack a horizon (face b ran out of YouCam units at +20)
+  horizonMissing: "not recorded for this face yet",
+  // the demo face switch: the group is named by eyebrow.demo, these name each round avatar link
+  faces: { a: "Demo face 1", b: "Demo face 2" } as Record<string, string>,
   today: "Age read today",
   slider: {
     label: "Divider between the two futures",

@@ -1,12 +1,13 @@
 import sharp from "sharp";
 import { CITATION, INTENSITIES, simSettings, spfDose, type SpfDose } from "./evidence";
 import { loadDemo, type FaceId } from "./fixtures";
+import { HORIZON_YEARS } from "./horizons";
 import { cropToCenter, prepareForAging, prepareForSimulation } from "./image";
 import { recordedUv, type Uv } from "./uv";
 import { ageFace, analyzeSkin, downloadFrame, pickNearest, simulateSkin, YoucamError } from "./youcam";
 import type { Opts, SkinAnalysis } from "./youcam";
 
-export const HORIZONS = [20, 30];
+export const HORIZONS: number[] = [...HORIZON_YEARS];
 const ACTIONS = ["wrinkle", "age_spot", "texture"];
 
 /** Centre-crop fractions tried, in order, after YouCam says face_too_small. At most one retry per entry. */
@@ -66,8 +67,11 @@ export function measuredLine(now: SkinAnalysis, spf: SkinAnalysis): Measured[] {
   return out;
 }
 
+/** Face a keeps the bare url so cached urls stay valid. */
+export const demoImageUrl = (name: string, face: FaceId = "a") => `/api/demo-image/${name}${face === "a" ? "" : `?face=${face}`}`;
+
 export function demoResult(uv: Uv | null = recordedUv(), face: FaceId = "a"): FutureResult {
-  const imageUrl = (name: string) => `/api/demo-image/${name}${face === "a" ? "" : `?face=${face}`}`; // face a keeps the bare url so cached urls stay valid
+  const imageUrl = (name: string) => demoImageUrl(name, face);
   const d = loadDemo(face);
   const dose = spfDose(uv);
   return {
