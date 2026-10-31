@@ -12,7 +12,7 @@
 defined( 'ABSPATH' ) || exit;
 
 const FF_WC_OPTION = 'ff_wc_url';
-const FF_WC_DEFAULT_URL = 'http://localhost:3000';
+const FF_WC_DEFAULT_URL = 'https://future-face.5-78-152-178.sslip.io';
 
 function ff_wc_base_url() {
 	return untrailingslashit( get_option( FF_WC_OPTION, FF_WC_DEFAULT_URL ) );

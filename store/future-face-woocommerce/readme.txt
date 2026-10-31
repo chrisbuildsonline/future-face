@@ -22,7 +22,7 @@ Nothing is output when WooCommerce is not active.
 == Installation ==
 
 1. Copy this folder to `wp-content/plugins/` and activate it.
-2. Go to Settings > Future Face and set the address of your Future Face app (default `http://localhost:3000`).
+2. Go to Settings > Future Face and set the address of your Future Face app (default `https://future-face.5-78-152-178.sslip.io`).
 
 == Changelog ==
 
