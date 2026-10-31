@@ -316,6 +316,7 @@ test.describe("upload on the landing", () => {
   // The client POSTs to /api/future and the server then calls Open-Meteo, which a page route cannot reach.
   // So the stub is exactly what the server answers without a key for that UV reading: demoResult(uv).
   test("two cities with different UV get different SPF renders of the same frame", async ({ page }) => {
+    test.setTimeout(60_000); // two full uploads (MediaPipe crop each): 7-14s alone, past 30s under the full parallel suite
     const errors = collectErrors(page);
     const cities = [
       // face a's tone factor is 0.5. Oslo: 3.9 / 7.8 x 0.5 = 0.25, clamped up to 0.5, so 0.24 x 0.5 = 0.12.
