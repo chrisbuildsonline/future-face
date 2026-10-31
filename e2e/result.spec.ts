@@ -280,7 +280,8 @@ test.describe("upload on the landing", () => {
     // Scoped to <main>: Next's app router always mounts its own empty role="alert" route announcer on <body>.
     const alert = page.locator("main").getByRole("alert");
     await expect(alert).toBeVisible();
-    await expect(alert).toHaveText(errorCopy.no_face);
+    await expect(alert).toContainText(errorCopy.no_face);
+    await expect(alert.getByRole("link", { name: "See the demo face" })).toHaveAttribute("href", "/result");
     expect(errors).toEqual([]);
   });
 

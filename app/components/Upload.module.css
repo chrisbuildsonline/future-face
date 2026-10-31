@@ -306,6 +306,44 @@
   font-weight: 700;
 }
 
+/* a submit error: the message, then the way out (the recorded demo result) */
+.errorBody {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+
+/* the paragraph takes focus from script only: the ring belongs to the link inside it */
+.error[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.errorLink {
+  display: inline-block;
+  padding-block: 4px;
+  color: var(--accent-text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: text-decoration-thickness 160ms var(--ease);
+}
+
+.errorLink::after {
+  content: "→" / "";
+  display: inline-block; /* atomic inline: the link's underline stops at the words */
+  margin-left: 6px;
+  transition: transform 160ms var(--ease);
+}
+
+.errorLink:hover {
+  text-decoration-thickness: 2px;
+}
+
+.errorLink:hover::after {
+  transform: translateX(3px);
+}
+
 .cta {
   display: flex;
   align-items: center;

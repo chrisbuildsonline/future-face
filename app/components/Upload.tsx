@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { errors, upload as c } from "@/lib/copy";
 import type { FutureResult } from "@/lib/pipeline";
@@ -66,6 +67,7 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
   const [city, setCity] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
   const resultRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     if (!file) {
@@ -82,6 +84,11 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
   useEffect(() => {
     if (state.kind === "done") {
       resultRef.current?.scrollIntoView({ block: "start" });
+    }
+    // a failed submit: bring the message to the person (it replaces the loading panel, often below the fold)
+    if (state.kind === "error") {
+      errorRef.current?.focus({ preventScroll: true });
+      errorRef.current?.scrollIntoView({ block: "center" });
     }
   }, [state.kind]);
 
@@ -219,8 +226,13 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
               </p>
             ) : null}
             {state.kind === "error" ? (
-              <p className={s.error} role="alert">
-                {state.message}
+              <p ref={errorRef} className={s.error} role="alert" tabIndex={-1}>
+                <span className={s.errorBody}>
+                  {state.message}
+                  <Link href="/result" className={s.errorLink}>
+                    {c.demoLink}
+                  </Link>
+                </span>
               </p>
             ) : null}
             <button type="submit" className={s.cta} disabled={!file || detecting || noFace || !city.trim()}>
