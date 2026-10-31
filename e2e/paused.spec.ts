@@ -21,7 +21,17 @@ async function fillAndSubmit(page: Page) {
   await page.getByLabel(upload.file).setInputFiles("e2e/fixtures/wide-selfie.jpg");
   await expect(page.locator("main").getByRole("status").first()).toHaveText(upload.cropDone, { timeout: 20_000 });
   await page.getByLabel(upload.city).fill("Lisbon");
-  await page.getByRole("button", { name: upload.submit }).click();
+  const submit = page.getByRole("button", { name: upload.submit });
+  await expect(submit).toBeEnabled();
+  // under full parallel load a click can land without starting a submit; retry until one starts (the POST is stubbed)
+  const started = page
+    .getByText(upload.loadingTitle)
+    .or(page.getByTestId("upload-result"))
+    .or(page.locator("main").getByRole("alert"));
+  await expect(async () => {
+    await submit.click({ timeout: 3000 });
+    await expect(started.first()).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 20_000 });
 }
 
 const viewports = [

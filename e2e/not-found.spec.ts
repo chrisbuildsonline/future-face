@@ -21,6 +21,7 @@ for (const vp of viewports) {
     test("is the branded page, with the demo result and the store one click away", async ({ page }) => {
       const res = await page.goto("/nope");
       expect(res?.status()).toBe(404);
+      await expect(page).toHaveTitle("Page not found · Future Face");
 
       const title = page.getByRole("heading", { level: 1 });
       await expect(title).toHaveText(notFound.title);

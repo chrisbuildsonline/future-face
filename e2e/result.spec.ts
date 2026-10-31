@@ -23,6 +23,20 @@ async function expectLoaded(img: Locator) {
     .toBe(true);
 }
 
+async function submitUpload(page: Page) {
+  const submit = page.getByRole("button", { name: upload.submit });
+  await expect(submit).toBeEnabled({ timeout: 20_000 }); // waits out the face crop
+  // under full parallel load a click can land without starting a submit; retry until one starts (the POST is stubbed)
+  const started = page
+    .getByText(upload.loadingTitle)
+    .or(page.getByTestId("upload-result"))
+    .or(page.locator("main").getByRole("alert"));
+  await expect(async () => {
+    await submit.click({ timeout: 3000 });
+    await expect(started.first()).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 20_000 });
+}
+
 const clipOf = (img: Locator) => img.evaluate((el) => getComputedStyle(el).clipPath);
 const noOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -275,7 +289,7 @@ test.describe("upload on the landing", () => {
     await page.goto("/");
     await page.getByLabel(upload.city).fill("Lisbon");
     await page.getByLabel(upload.file).setInputFiles(selfie);
-    await page.getByRole("button", { name: upload.submit }).click();
+    await submitUpload(page);
 
     // Scoped to <main>: Next's app router always mounts its own empty role="alert" route announcer on <body>.
     const alert = page.locator("main").getByRole("alert");
@@ -301,7 +315,7 @@ test.describe("upload on the landing", () => {
     await page.goto("/");
     await page.getByLabel(upload.city).fill("Lisbon");
     await page.getByLabel(upload.file).setInputFiles(selfie);
-    await page.getByRole("button", { name: upload.submit }).click();
+    await submitUpload(page);
 
     await expect(page.getByText(upload.loadingTitle)).toBeVisible();
     await expect(page.getByText(upload.loading)).toBeVisible();
@@ -337,7 +351,7 @@ test.describe("upload on the landing", () => {
       await page.goto("/");
       await page.getByLabel(upload.city).fill(c.city);
       await page.getByLabel(upload.file).setInputFiles(selfie);
-      await page.getByRole("button", { name: upload.submit }).click();
+      await submitUpload(page);
 
       const now = page.getByTestId("face-now");
       const spf = page.getByTestId("face-spf");

@@ -127,6 +127,7 @@ for (const [name, viewport] of [
         await openModal(page);
         await page.mouse.click(8, 8);
         await expect(iframe).toHaveCount(0);
+        await expect(pill).toBeFocused();
       }
       expect(errors).toEqual([]);
     });
