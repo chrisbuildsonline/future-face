@@ -304,30 +304,33 @@ export function Routine({ id, uv, headingRef, catalogue, prefer, concerns, cart 
                 <div className={`${s.tile} ${p.image ? s.tilePhoto : ""}`}>
                   <ProductImage product={p} />
                 </div>
-                {picked && r.fit ? (
-                  <span className={`${s.pill} ${r.fit.ok ? s.pillGood : s.pillWatch} ${s.fit}`} data-testid="fit-pill">
-                    {r.fit.line}
-                  </span>
-                ) : null}
-                {step.id === "morning" && focus ? (
-                  <span className={`${s.pill} ${s.pillAccent} ${s.fit}`} data-testid="focus-pill">
-                    <span className={s.focusDot} aria-hidden />
-                    {`${c.focusPrefix} ${c.focus[focus]}, ${c.focusSuffix}`}
-                  </span>
-                ) : null}
-                <div className={s.info}>
-                  {p.brand ? <p className={s.brand}>{p.brand}</p> : null}
-                  <h3 className={s.name}>{p.name}</h3>
-                  <p className={s.size}>{[p.kind, p.size].filter(Boolean).join(" · ")}</p>
+                {/* the tag and the product details share one row, so a tag never pushes "Why this step" down */}
+                <div className={s.about}>
+                  {picked && r.fit ? (
+                    <span className={`${s.pill} ${r.fit.ok ? s.pillGood : s.pillWatch} ${s.fit}`} data-testid="fit-pill">
+                      {r.fit.line}
+                    </span>
+                  ) : null}
+                  {step.id === "morning" && focus ? (
+                    <span className={`${s.pill} ${s.pillAccent} ${s.fit}`} data-testid="focus-pill">
+                      <span className={s.focusDot} aria-hidden />
+                      {`${c.focusPrefix} ${c.focus[focus]}, ${c.focusSuffix}`}
+                    </span>
+                  ) : null}
+                  <div className={s.info}>
+                    {p.brand ? <p className={s.brand}>{p.brand}</p> : null}
+                    <h3 className={s.name}>{p.name}</h3>
+                    <p className={s.size}>{[p.kind, p.size].filter(Boolean).join(" · ")}</p>
+                  </div>
                 </div>
-                <p className={s.why}>
+                <p className={s.why} data-testid="why">
                   <span className={s.whyLabel}>{c.why}</span>
                   {step.why}
                 </p>
-                <div className={s.buy}>
+                <div className={s.buy} data-testid="buy">
                   {p.url ? (
-                    <a href={p.url} className={s.obf} target="_blank" rel="noreferrer">
-                      {c.obf}
+                    <a href={p.url} className={s.obf} target="_blank" rel="noreferrer" aria-label={`${c.obf}: ${productLabel(p)}`}>
+                      {c.obfShort}
                       <span aria-hidden> ↗</span>
                     </a>
                   ) : (

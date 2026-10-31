@@ -210,6 +210,8 @@ export const routine = {
   listEmpty: "Nothing saved yet. Save a step to keep your routine.",
   listNote: "Saved on this page only. Find each product in your usual shop.",
   obf: "View on Open Beauty Facts",
+  // the visible label (one line in a narrow card); the link's accessible name is `${obf}: <product>`
+  obfShort: "Open Beauty Facts",
   with: "With",
   item: "item",
   items: "items",
