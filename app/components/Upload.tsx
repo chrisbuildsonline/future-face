@@ -12,7 +12,7 @@ import s from "./Upload.module.css";
 type State =
   | { kind: "idle" }
   | { kind: "loading"; started: number }
-  | { kind: "error"; message: string }
+  | { kind: "error"; message: string; city?: boolean } // city: the server could not find the city
   | { kind: "done"; data: FutureResult };
 
 // original = what the person picked; cropped = the face crop, if one was made; useCrop = not undone;
@@ -115,7 +115,7 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
       const res = await fetch("/api/future", { method: "POST", body });
       const json = await res.json().catch(() => null);
       if (res.ok && Array.isArray(json?.horizons)) setState({ kind: "done", data: json });
-      else setState({ kind: "error", message: json?.error?.message ?? errors.unknown });
+      else setState({ kind: "error", message: json?.error?.message ?? errors.unknown, city: json?.error?.kind === "city_not_found" });
     } catch {
       setState({ kind: "error", message: errors.unknown });
     }
@@ -135,6 +135,10 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
   const busy = state.kind === "loading";
   const fileId = `${uid}-file`;
   const hintId = `${uid}-hint`;
+  const errorId = `${uid}-error`;
+  const needId = `${uid}-need`;
+  const cityError = state.kind === "error" && state.city;
+  const need = !file ? (city.trim() ? c.needSelfie : c.needBoth) : city.trim() ? "" : c.needCity;
   const cropped = !detecting && photo?.cropped ? photo : null;
   const noFace = !detecting && photo?.noFace;
   const statusText = detecting ? c.cropFinding : cropped ? (cropped.useCrop ? c.cropDone : c.cropFull) : "";
@@ -206,7 +210,12 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
                 className={s.input}
                 list={`${uid}-cities`}
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  if (cityError) setState({ kind: "idle" }); // a new city starts over
+                }}
+                aria-invalid={cityError || undefined}
+                aria-describedby={cityError ? errorId : undefined}
                 placeholder={c.cityPlaceholder}
                 autoComplete="address-level2"
                 maxLength={80}
@@ -228,19 +237,28 @@ export function Upload({ catalogue, product = null, cart = null }: UploadProps) 
             {state.kind === "error" ? (
               <p ref={errorRef} className={s.error} role="alert" tabIndex={-1}>
                 <span className={s.errorBody}>
-                  {state.message}
+                  <span id={errorId}>{state.message}</span>
                   <Link href="/result" className={s.errorLink}>
                     {c.demoLink}
                   </Link>
                 </span>
               </p>
             ) : null}
-            <button type="submit" className={s.cta} disabled={!file || detecting || noFace || !city.trim()}>
+            <button
+              type="submit"
+              className={s.cta}
+              disabled={!file || detecting || noFace || !city.trim()}
+              aria-describedby={need ? needId : undefined}
+            >
               <span>{c.submit}</span>
               <span className={s.ctaIcon}>
                 <Arrow />
               </span>
             </button>
+            {/* always mounted, so the card does not jump when the button turns on */}
+            <p id={needId} className={s.need}>
+              {need}
+            </p>
           </>
         )}
       </div>

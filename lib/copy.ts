@@ -255,6 +255,10 @@ export const upload = {
   cityPlaceholder: "Lisbon",
   cities: ["Lisbon", "Madrid", "London", "Stockholm", "Cape Town", "Sydney", "Brisbane", "Singapore", "Mexico City", "Los Angeles"],
   submit: "Show my two futures",
+  // under the submit while it is disabled: what is still missing
+  needBoth: "Add a selfie and your city",
+  needSelfie: "Add a selfie",
+  needCity: "Add your city",
   loadingTitle: "Rendering your two futures",
   loading: "Three YouCam models run one after another. A live run usually takes one to two minutes, so keep this tab open.",
   elapsed: "elapsed",

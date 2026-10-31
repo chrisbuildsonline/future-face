@@ -389,6 +389,16 @@
   transform: translateX(3px);
 }
 
+/* what the disabled submit is waiting for; empty (space kept) once it is enabled */
+.need {
+  min-height: 1.5em;
+  margin-top: -8px;
+  color: var(--ink-2);
+  font-size: var(--t-small);
+  line-height: 1.5;
+  text-align: center;
+}
+
 /* ---------- loading ---------- */
 .loading {
   display: grid;
