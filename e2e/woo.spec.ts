@@ -12,6 +12,7 @@ test.beforeAll(async () => {
 });
 
 test("a seeded SPF 50 product page embeds the Future Face widget", async ({ page, request }) => {
+  test.setTimeout(60_000); // WordPress renders slowly while the rest of the suite runs in parallel
   const { products } = JSON.parse(readFileSync("fixtures/products.json", "utf8")) as {
     products: { code: string; spf: number | null }[];
   };
@@ -26,7 +27,11 @@ test("a seeded SPF 50 product page embeds the Future Face widget", async ({ page
   // Demo prices are per kind of product: no SPF 50 product costs the old flat 9.90.
   expect(found.prices.price).not.toBe("990");
 
-  await page.goto(found.permalink);
+  // The plugin's deferred widget.js points at the app URL stored in WordPress (:3100 from `bun run store`),
+  // not the :3123 server under test. A deferred script holds DOMContentLoaded until it settles, so a dead or
+  // stale host hangs goto. This test checks the markup, so stub the body (the tag still comes from the page).
+  await page.route("**/widget.js", (route) => route.fulfill({ contentType: "text/javascript", body: "" }));
+  await page.goto(found.permalink, { waitUntil: "domcontentloaded" });
 
   await expect(page.getByText("Sun care for every UV day").first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Sun care" }).first()).toBeVisible();
