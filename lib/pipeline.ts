@@ -38,6 +38,8 @@ export type FutureResult = {
   /** Which recorded demo face; set on demo results only. */
   face?: FaceId;
   notice?: string;
+  /** Live renders are out of units; this is the demo face standing in. */
+  paused?: boolean;
   input?: string;
   inputAge: number;
   frames: number[];

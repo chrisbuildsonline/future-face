@@ -5,7 +5,7 @@ import { GET, POST } from "../app/api/future/route";
 import { errors } from "./copy";
 
 const realFetch = globalThis.fetch;
-const saved = { key: process.env.YOUCAM_SECRET_KEY, max: process.env.LIVE_RUNS_MAX };
+const saved = { key: process.env.YOUCAM_SECRET_KEY, max: process.env.LIVE_RUNS_MAX, api: process.env.YOUCAM_API_KEY };
 let fetchCalls: string[] = [];
 
 const geo = { results: [{ name: "Lisbon", country: "Portugal", latitude: 38.72, longitude: -9.14 }] };
@@ -21,6 +21,7 @@ function mockOpenMeteo(geocode: unknown = geo) {
 
 beforeEach(() => {
   delete process.env.YOUCAM_SECRET_KEY;
+  delete process.env.YOUCAM_API_KEY; // a local .env may set the alias
   delete process.env.LIVE_RUNS_MAX;
   fetchCalls = [];
   mockOpenMeteo();
@@ -30,6 +31,8 @@ afterEach(() => {
   globalThis.fetch = realFetch;
   if (saved.key === undefined) delete process.env.YOUCAM_SECRET_KEY;
   else process.env.YOUCAM_SECRET_KEY = saved.key;
+  if (saved.api === undefined) delete process.env.YOUCAM_API_KEY;
+  else process.env.YOUCAM_API_KEY = saved.api;
   if (saved.max === undefined) delete process.env.LIVE_RUNS_MAX;
   else process.env.LIVE_RUNS_MAX = saved.max;
 });
@@ -150,6 +153,28 @@ describe("POST /api/future", () => {
     expect(res.status).toBe(429);
     expect((await res.json()).error.kind).toBe("rate_limited");
     expect(fetchCalls.every((u) => u.includes("open-meteo.com"))).toBe(true);
+  });
+
+  test("YouCam out of credits -> 200 demo result for the typed city, paused, and the live slot is given back", async () => {
+    process.env.YOUCAM_SECRET_KEY = "test";
+    process.env.LIVE_RUNS_MAX = "1";
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      fetchCalls.push(url);
+      if (!url.includes("open-meteo")) return Response.json({ status: 400, error: "x", error_code: "CreditInsufficiency" }, { status: 400 });
+      return Response.json(url.includes("geocoding-api") ? geo : forecast);
+    }) as typeof fetch;
+    for (let i = 0; i < 2; i++) {
+      const res = await post({ city: "Lisbon" });
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.source).toBe("demo");
+      expect(body.paused).toBe(true);
+      expect(body.notice).toBe(errors.insufficient_units);
+      expect(body.uv.city).toBe("Lisbon");
+      expect(Array.isArray(body.horizons)).toBe(true);
+    }
+    expect(fetchCalls.some((u) => !u.includes("open-meteo"))).toBe(true);
   });
 });
 

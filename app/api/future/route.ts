@@ -59,6 +59,10 @@ export async function POST(req: Request) {
     return Response.json({ ...result, uv });
   } catch (e) {
     if (!(e instanceof YoucamError)) return fail(500, "unknown");
+    if (e.kind === "insufficient_units") {
+      liveRuns--; // no units were spent, give the slot back
+      return Response.json({ ...demoResult(uv), notice: errors.insufficient_units, paused: true });
+    }
     return fail(STATUS_422.includes(e.kind) ? 422 : e.kind === "rate_limited" ? 429 : 503, e.kind);
   }
 }
