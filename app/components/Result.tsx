@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { landing, result as c, routine as rc } from "@/lib/copy";
+import { defaultYears, HORIZON_YEARS, horizonSlots } from "@/lib/horizons";
 import type { FutureResult } from "@/lib/pipeline";
 import type { Uv } from "@/lib/uv";
 import { uvBand } from "@/lib/uv-band";
@@ -312,8 +314,37 @@ function UvCard({ uv }: { uv: Uv }) {
   );
 }
 
+/** One recorded demo face: a real link to /result?face=<id> with the page's other params kept. */
+export type FaceLink = { id: string; href: string; src: string };
+
+/** Round avatar links between the recorded demo faces; the selected one wears the accent ring. */
+function FaceSwitch({ faces, current }: { faces: FaceLink[]; current: string }) {
+  const uid = useId();
+  return (
+    <div className={s.faces} role="group" aria-labelledby={`${uid}-f`}>
+      <span id={`${uid}-f`} className={s.facesLabel}>
+        {c.eyebrow.demo}
+      </span>
+      {faces.map((f) => (
+        <Link
+          key={f.id}
+          href={f.href}
+          scroll={false}
+          className={s.faceLink}
+          aria-label={c.faces[f.id] ?? f.id}
+          aria-current={f.id === current ? "true" : undefined}
+        >
+          <img src={f.src} alt="" />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 type ResultProps = {
   data: FutureResult;
+  /** The recorded demo faces to switch between; shown on demo results only. */
+  faces?: FaceLink[] | null;
   titleTag?: "h1" | "h2";
   catalogue: Product[];
   /** A product picked on a store page: shown first, and the routine opens with it as the morning step. */
@@ -321,9 +352,9 @@ type ResultProps = {
   cart?: string[] | null;
 };
 
-export function Result({ data, titleTag: Title = "h1", catalogue, product = null, cart = null }: ResultProps) {
+export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, product = null, cart = null }: ResultProps) {
   const uid = useId();
-  const [years, setYears] = useState(() => data.horizons[data.horizons.length - 1]?.years ?? 0);
+  const [years, setYears] = useState(() => defaultYears(data.horizons));
   const [routineOpen, setRoutineOpen] = useState(Boolean(product));
   const routineHead = useRef<HTMLHeadingElement>(null);
   const routineId = `${uid}-routine`;
@@ -342,10 +373,13 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
   const nextRef = useRef<HTMLDivElement>(null);
   const covering = useCovering(nextRef, figureRef);
 
-  const idx = Math.max(0, data.horizons.findIndex((x) => x.years === years));
-  const h = data.horizons[idx];
+  const h = data.horizons.find((x) => x.years === years) ?? data.horizons.find((x) => x.years === defaultYears(data.horizons));
   if (!h) return null;
-  const labelOf = (i: number, y: number) => landing.visual.horizon[i] ?? `+${y} yrs`;
+  const labelOf = (y: number) => landing.visual.horizon[(HORIZON_YEARS as readonly number[]).indexOf(y)] ?? `+${y} yrs`;
+  const slots = horizonSlots(data.horizons);
+  const missing = slots.filter((x) => !x.available);
+  const noteId = `${uid}-hz-note`;
+  const switcher = data.source === "demo" && faces?.length ? faces : null;
 
   const openRoutine = () => {
     clicked.current = true;
@@ -363,11 +397,15 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
       <header className={s.head}>
         <div className={s.headCopy}>
           <div className={s.meta}>
-            <span className={`${s.pill} ${data.source === "demo" ? s.pillNeutral : s.pillAccent}`}>
-              {data.source === "demo" ? c.eyebrow.demo : c.eyebrow.live}
-            </span>
+            {switcher ? (
+              <FaceSwitch faces={switcher} current={data.face ?? "a"} />
+            ) : (
+              <span className={`${s.pill} ${data.source === "demo" ? s.pillNeutral : s.pillAccent}`}>
+                {data.source === "demo" ? c.eyebrow.demo : c.eyebrow.live}
+              </span>
+            )}
             <span className={s.today}>
-              {data.input ? <img src={data.input} alt="" className={s.avatar} /> : null}
+              {data.input && !switcher ? <img src={data.input} alt="" className={s.avatar} /> : null}
               <span className={s.todayLabel}>{c.today}</span>
               <b className={s.todayAge}>{data.inputAge}</b>
             </span>
@@ -396,18 +434,25 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
             {c.horizonLabel}
           </span>
           <div className={s.segmented} role="group" aria-labelledby={`${uid}-hz`}>
-            {data.horizons.map((x, i) => (
+            {slots.map((x) => (
               <button
                 key={x.years}
                 type="button"
                 className={s.segment}
                 aria-pressed={x.years === h.years}
+                disabled={!x.available}
+                aria-describedby={x.available ? undefined : noteId}
                 onClick={() => setYears(x.years)}
               >
-                {labelOf(i, x.years)}
+                {labelOf(x.years)}
               </button>
             ))}
           </div>
+          {missing.length ? (
+            <p id={noteId} className={s.horizonNote}>
+              {missing.map((x) => `+${x.years}`).join(", ")} {c.horizonMissing}
+            </p>
+          ) : null}
         </div>
       </header>
 
@@ -419,7 +464,7 @@ export function Result({ data, titleTag: Title = "h1", catalogue, product = null
       ) : null}
 
       <div className={s.grid}>
-        <Compare ref={figureRef} h={h} label={labelOf(idx, h.years)} dose={data.dose} citation={data.citation} />
+        <Compare ref={figureRef} h={h} label={labelOf(h.years)} dose={data.dose} citation={data.citation} />
         <Measured h={h} settings={data.settings} citation={data.citation} />
         <Closeup h={h} />
         {data.uv ? <UvCard uv={data.uv} /> : null}

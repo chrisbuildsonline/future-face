@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { findProduct, loadCatalogue } from "@/lib/catalogue";
 import { brand, embed as ec, landing, result } from "@/lib/copy";
-import { demoResult } from "@/lib/pipeline";
+import { DEMO_FACES, isFace, type FaceId } from "@/lib/fixtures";
+import { demoImageUrl, demoResult } from "@/lib/pipeline";
 import { isCode } from "@/lib/products";
 import { EmbedClose } from "../components/EmbedClose";
 import e from "../components/EmbedClose.module.css";
@@ -26,6 +27,20 @@ export default async function ResultPage({ searchParams }: Props) {
   const embed = one(q.embed) === "1";
   const cart = embed ? one(q.cart).split(",").filter(isCode) : null;
   const catalogue = loadCatalogue();
+  const faceParam = one(q.face);
+  const face: FaceId = isFace(faceParam) ? faceParam : "a";
+  const data = demoResult(undefined, face);
+  // One link per recorded face, keeping every other query param (embed, product, cart, ...).
+  const faces = DEMO_FACES.map((id) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(q)) if (k !== "face") for (const x of [v ?? []].flat()) p.append(k, x);
+    p.set("face", id);
+    return { id, href: `/result?${p}`, src: demoImageUrl("input.jpg", id) };
+  });
+  // keyed by face: a new face starts on its own default horizon
+  const demo = (titleTag?: "h2") => (
+    <Result key={face} data={data} faces={faces} titleTag={titleTag} catalogue={catalogue} product={product} cart={cart} />
+  );
 
   // Store widget modal: the shopper's own selfie first (one job), the demo face as a labelled fallback below.
   if (embed)
@@ -54,7 +69,7 @@ export default async function ResultPage({ searchParams }: Props) {
             </h2>
             <p className={e.fallbackNote}>{ec.fallbackNote}</p>
           </div>
-          <Result data={demoResult()} titleTag="h2" catalogue={catalogue} product={product} cart={cart} />
+          {demo("h2")}
         </section>
       </main>
     );
@@ -77,7 +92,7 @@ export default async function ResultPage({ searchParams }: Props) {
       </header>
 
       <main className={styles.page}>
-        <Result data={demoResult()} catalogue={catalogue} product={product} />
+        {demo()}
       </main>
 
       <footer className={styles.footer}>
