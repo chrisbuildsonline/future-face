@@ -31,6 +31,7 @@ try {
   } else {
     console.log(`source ${body.source}`);
     if (body.notice) console.log(`notice ${body.notice}`);
+    if (body.dose) console.log(`dose ${JSON.stringify(body.dose)} frames ${body.horizons.map((h: { years: number; resAge: number }) => `+${h.years}:${h.resAge}`).join(" ")}`);
     if (body.source === "live") code = 0;
   }
 } finally {
