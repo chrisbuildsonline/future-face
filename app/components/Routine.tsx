@@ -3,7 +3,7 @@
 import { useId, useRef, useState, type Ref } from "react";
 import { result as rc, routine as c } from "@/lib/copy";
 import { productLabel, type Product } from "@/lib/products";
-import { routineFor } from "@/lib/routine";
+import { fitsConcern, routineFor, type Concerns } from "@/lib/routine";
 import type { Uv } from "@/lib/uv";
 import s from "./Routine.module.css";
 
@@ -224,13 +224,18 @@ type RoutineProps = {
   headingRef: Ref<HTMLHeadingElement>;
   catalogue: Product[];
   prefer?: string | null;
+  /** The model's readings of the shown horizon: the morning pick follows the weakest (lowest) one (a preferred product still wins). */
+  concerns?: Concerns | null;
   /** Codes the embedding store sells: those steps post "future-face:add" to the parent page. */
   cart?: string[] | null;
 };
 
-export function Routine({ id, uv, headingRef, catalogue, prefer, cart }: RoutineProps) {
+export function Routine({ id, uv, headingRef, catalogue, prefer, concerns, cart }: RoutineProps) {
   const uid = useId();
-  const r = routineFor(uv.uvMax, catalogue, prefer);
+  const r = routineFor(uv.uvMax, catalogue, prefer, concerns);
+  // only say "picked for" when the morning product really is the concern's kind (not a fallback, not a store pick)
+  const morning = r.steps.find((x) => x.id === "morning")?.product;
+  const focus = r.focus && !r.preferred && morning && fitsConcern(morning, r.focus.concern) ? r.focus.concern : null;
   const [ids, setIds] = useState<string[]>([]);
   const sheet = useRef<HTMLDialogElement>(null);
   const watch = r.band !== "low" && r.band !== "moderate";
@@ -302,6 +307,12 @@ export function Routine({ id, uv, headingRef, catalogue, prefer, cart }: Routine
                 {picked && r.fit ? (
                   <span className={`${s.pill} ${r.fit.ok ? s.pillGood : s.pillWatch} ${s.fit}`} data-testid="fit-pill">
                     {r.fit.line}
+                  </span>
+                ) : null}
+                {step.id === "morning" && focus ? (
+                  <span className={`${s.pill} ${s.pillAccent} ${s.fit}`} data-testid="focus-pill">
+                    <span className={s.focusDot} aria-hidden />
+                    {`${c.focusPrefix} ${c.focus[focus]}, ${c.focusSuffix}`}
                   </span>
                 ) : null}
                 <div className={s.info}>

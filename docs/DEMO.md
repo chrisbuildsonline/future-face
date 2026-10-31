@@ -33,24 +33,24 @@ A 2 to 2.5 minute walkthrough for a live presenter or the demo video. It needs n
 **4. The slider (0:40 to 0:55)**
 
 - Do: drag the divider across the face, between **As you live now** and **With daily SPF**.
-- Show: the one caption under the slider, **Both faces** **Frame age 66**, and under it **The SPF dose**: **0.24 × (7.8 / 7.8) ≈ 1.0 = 0.24**, with **UV today in Nambour** and **UV in Nambour, the trial site**.
-- Say: "Both faces are the same Aging Generator frame, thirty years on: grey hair, deeper lines. The only difference is the right side: that frame through AI Skin Simulation, at 0.24 times your city's UV today over the UV in Nambour, Queensland, where the sunscreen trial ran. Here the city is Nambour itself, so the dose is the trial's own 0.24; a sunnier city gets a stronger pass. The caption stays on screen: illustrative projection, not a prognosis."
+- Show: the one caption under the slider, **Both faces** **Frame age 66**, and under it **The SPF dose**: **0.24 × (1.0 × 0.5) ≈ 0.5 = 0.12** (UV ratio 7.8 / 7.8, times the skin tone factor 0.5), with **UV today in Nambour**, **UV in Nambour, the trial site** and the **Skin tone** tile (brown, ITA −6.2°).
+- Say: "Both faces are the same Aging Generator frame, thirty years on: grey hair, deeper lines. The only difference is the right side: that frame through AI Skin Simulation, at 0.24 times your city's UV today over the UV in Nambour, Queensland, where the sunscreen trial ran, times a factor for the skin tone we measured on your face. Here the city is Nambour itself, so the UV ratio is 1.0, but this face measures brown, factor 0.5, so the default demo doses 0.12; a sunnier city or a fairer face gets a stronger pass. The caption stays on screen: illustrative projection, not a prognosis."
 
-**5. Where 0.24 comes from (0:55 to 1:10)**
+**5. Where the 0.12 comes from (0:55 to 1:10)**
 
-- Click: **Source** on the **Wrinkles** row. The card **Why this intensity · 0.24** opens.
-- Say: "Every intensity has a source. Hughes and colleagues, Annals of Internal Medicine 2013: in a 4.5-year trial, daily sunscreen users showed 24% less skin aging than discretionary users. That 24% becomes 0.24 on the model's 0 to 1 scale, at the trial site's UV."
+- Click: **Source** on the **Wrinkles** row. The card **Why this intensity · 0.12** opens.
+- Say: "Every intensity has a source. Hughes and colleagues, Annals of Internal Medicine 2013: in a 4.5-year trial, daily sunscreen users showed 24% less skin aging than discretionary users. That 24% becomes 0.24 on the model's 0 to 1 scale, at the trial site's UV on fair skin; this face's measured tone scales it by 0.5, so 0.12."
 - Click anywhere outside the card to close it.
 
 **6. The model reading (1:10 to 1:30)**
 
 - Show: the card **Read by AI Skin Analysis**, **The model reading**, **Higher = better-looking skin**.
-- Say: "AI Skin Analysis reads both renders. Wrinkles 21.6 to 51.7, texture 64.1 to 73.9, spots 63.4 to 79.3. Each number is the model's reading of a render, not a reading of you."
+- Say: "AI Skin Analysis reads both renders. Wrinkles 21.6 to 36.6, texture 64.1 to 69.1, spots 63.4 to 74.7. Each number is the model's reading of a render, not a reading of you."
 
 **7. Change the horizon (1:30 to 1:40)**
 
 - Click: **+20 yrs**, then **+30 yrs**.
-- Say: "Twenty years on both faces are frame 55, and wrinkles differ by plus 20.7. At thirty it is frame 66, and plus 30.1."
+- Say: "Twenty years on both faces are frame 55, and wrinkles differ by plus 11.3. At thirty it is frame 66, and plus 15.0."
 
 **8. UV where you live (1:40 to 1:50)**
 

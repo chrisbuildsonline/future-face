@@ -74,9 +74,9 @@ for (const vp of viewports) {
       const spf = hero.getByTestId("hero-spf");
       await expectLoaded(now);
       await expectLoaded(spf);
-      // +30 yrs is the default horizon; the SPF face at the demo's own dose (0.24)
+      // +30 yrs is the default horizon; the SPF face at the demo's own dose (0.12: Nambour's UV x face a's brown tone, 0.5)
       await expect(now).toHaveAttribute("src", /now-30\.jpg/);
-      await expect(spf).toHaveAttribute("src", /spf-30-024\.jpg/);
+      await expect(spf).toHaveAttribute("src", /spf-30-012\.jpg/);
       await expect(hero.getByText(resultCopy.slider.left, { exact: true })).toBeVisible();
       await expect(hero.getByText(resultCopy.slider.right, { exact: true })).toBeVisible();
 

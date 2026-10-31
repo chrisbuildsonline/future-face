@@ -530,7 +530,6 @@
 }
 
 .doseCite {
-  margin-left: auto;
   font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -547,31 +546,35 @@
   text-decoration-thickness: 2px;
 }
 
-.formula {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 18px;
-}
-
-/* groups never break inside; the formula wraps between them on a phone */
-.group {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-}
-
-/* number over its label; the top pad (one label line) puts the number level with the fraction bar */
-.term {
+/* the inputs: both UV readings and the measured skin tone, as small white tiles on the inset */
+.doseTiles {
   display: grid;
-  justify-items: center;
-  gap: 4px;
-  padding-top: 20px;
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 8px;
 }
 
-.term b,
-.frac b {
+.doseTile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px 14px;
+  border-radius: calc(var(--r-inner) - 4px);
+  background: var(--surface);
+}
+
+.doseTile small {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: var(--ink-2);
+}
+
+.doseTile b {
   font-family: var(--font-serif);
+  font-size: 30px;
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.01em;
@@ -579,12 +582,76 @@
   font-variant-numeric: tabular-nums;
 }
 
-.term b {
-  font-size: 34px;
+.toneValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.term small,
-.frac small {
+/* the measured tone as a colour on its ITA line: illustrative, the dose uses the angle */
+.swatch {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--hairline), 0 0 0 3px var(--surface-sunk);
+}
+
+.swatchNone {
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--ink-3);
+}
+
+.toneMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin-top: -4px;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.toneMeta span:first-child {
+  color: var(--ink);
+}
+
+/* one line of arithmetic: 0.24 x (UV ratio x tone, rounded) = intensity */
+.formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 14px;
+  padding: 2px 2px 0;
+}
+
+/* groups never break inside; the formula wraps between them on a phone */
+.group {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* number over its label */
+.term {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.term b {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.term small {
   font-size: var(--t-micro);
   font-weight: 600;
   line-height: 1.3;
@@ -593,37 +660,57 @@
   white-space: nowrap;
 }
 
+/* "rounded to nearest 0.5" sits on two short lines under its number */
+.termRounded small {
+  white-space: normal;
+  max-width: 11ch;
+  text-align: center;
+}
+
 .termResult b {
   color: var(--accent);
 }
 
-/* city UV over Nambour UV: numbers share one column and one bar, each labelled to its right */
-.frac {
-  display: grid;
-  grid-template-columns: auto auto;
-  align-items: center;
-  column-gap: 10px;
-}
-
-.frac b {
-  display: block;
-  font-size: 28px;
-  text-align: center;
-  padding: 2px 4px 5px;
-}
-
-.frac b:first-of-type {
-  border-bottom: 1.5px solid var(--ink-2);
-}
-
-.frac b:last-of-type {
-  padding: 6px 4px 1px;
-}
-
-.op {
+/* operators sit level with the numbers (line box = the number's 34px) */
+.op,
+.paren {
   font-family: var(--font-serif);
   font-size: 26px;
-  line-height: 1;
+  line-height: 34px;
+  color: var(--ink-2);
+}
+
+.paren {
+  font-size: 34px;
+  color: var(--ink-3);
+}
+
+.doseFoot {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.doseCites {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 14px;
+}
+
+.doseSources {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+
+.assumption {
+  max-width: 60ch;
+  font-size: var(--t-micro);
+  font-weight: 500;
+  line-height: 1.45;
   color: var(--ink-2);
 }
 
@@ -631,19 +718,45 @@
   .dose {
     padding: 14px 14px 16px;
   }
+  .doseTiles {
+    grid-template-columns: 1fr 1fr;
+  }
+  /* the tone tile runs across both columns: swatch and factor left, band and ITA right */
+  .toneTile {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "label label" "value meta";
+    align-items: center;
+    column-gap: 14px;
+  }
+  .toneTile > small {
+    grid-area: label;
+  }
+  .toneTile .toneValue {
+    grid-area: value;
+  }
+  .toneTile .toneMeta {
+    grid-area: meta;
+    flex-direction: column;
+    margin-top: 0;
+  }
+  .doseTile b {
+    font-size: 28px;
+  }
   .formula,
   .group {
-    gap: 10px 12px;
+    gap: 10px;
   }
   .term b {
     font-size: 30px;
   }
-  .frac b {
-    font-size: 26px;
+  .op,
+  .paren {
+    line-height: 30px;
   }
-  .frac small {
-    white-space: normal;
-    max-width: 15ch;
+  .paren {
+    font-size: 30px;
   }
 }
 

@@ -289,9 +289,22 @@
 .step[data-picked] {
   box-shadow: var(--shadow-card), 0 0 0 2px var(--accent);
 }
+/* the product's tag (store-pick fit, or "Picked for lines, your weakest reading"): may wrap in a narrow step card */
 .fit {
   align-self: flex-start;
   margin: -4px 4px 0;
+  height: auto;
+  min-height: 28px;
+  padding: 6px 12px;
+  line-height: 1.3;
+  white-space: normal;
+}
+.focusDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 .brand {
   margin: 0 0 2px;
@@ -817,6 +830,20 @@
       "buy buy";
     gap: 14px 16px;
     padding: 16px;
+  }
+  /* the tag sits in the info column, above the brand, right of the thumbnail */
+  .step:has(.fit) {
+    grid-template-areas:
+      "head head"
+      "tile tag"
+      "tile info"
+      "why why"
+      "buy buy";
+    grid-template-rows: auto auto 1fr auto auto;
+  }
+  .fit {
+    grid-area: tag;
+    margin: 0;
   }
   .stepHead {
     grid-area: head;

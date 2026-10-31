@@ -1,14 +1,22 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { result as resultCopy, routine as copy, upload } from "../lib/copy";
+import { defaultYears } from "../lib/horizons";
+import { demoResult, type FutureResult } from "../lib/pipeline";
 import { productLabel, storeProduct, type Product } from "../lib/products";
-import { routineFor } from "../lib/routine";
+import { routineFor, type Concerns } from "../lib/routine";
 
 mkdirSync("docs/screenshots", { recursive: true });
 
+/** The default horizon's "as you live now" readings, as the result passes them to the routine. */
+const concernsOf = (horizons: FutureResult["horizons"]): Concerns => {
+  const h = horizons.find((x) => x.years === defaultYears(horizons))!;
+  return Object.fromEntries(h.measured.map((m) => [m.key, m.now])) as Concerns;
+};
+
 const catalogue = JSON.parse(readFileSync("fixtures/products.json", "utf8")).products as Product[];
 const uv = JSON.parse(readFileSync("fixtures/demo/uv.json", "utf8")) as { city: string; uvMax: number };
-const r = routineFor(uv.uvMax, catalogue);
+const r = routineFor(uv.uvMax, catalogue, null, concernsOf(demoResult(undefined, "a").horizons));
 const [a, b] = r.steps.map((s) => s.product);
 const count = (n: number) => `${n} ${n === 1 ? copy.item : copy.items}`;
 
@@ -192,7 +200,7 @@ test.describe("routine at 390", () => {
 test("the routine opens from the in-place upload result on the landing", async ({ page, request }) => {
   const errors = collectErrors(page);
   const demo = await (await request.get("/api/future")).json();
-  const routine = routineFor(demo.uv.uvMax, catalogue);
+  const routine = routineFor(demo.uv.uvMax, catalogue, null, concernsOf(demo.horizons));
   await page.route("**/api/future", (route) =>
     route.request().method() === "POST" ? route.fulfill({ json: demo }) : route.continue(),
   );

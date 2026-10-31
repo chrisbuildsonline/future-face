@@ -11,11 +11,19 @@ import { CompareSlider } from "./CompareSlider";
 import t from "./CompareSlider.module.css";
 import s from "./Result.module.css";
 import { productLabel, type Product } from "@/lib/products";
-import { routineFor } from "@/lib/routine";
+import { routineFor, type Concerns } from "@/lib/routine";
+import { TONE_ASSUMPTION, TONE_CITATIONS, toneSwatch } from "@/lib/tone";
 import { Arrow, Routine } from "./Routine";
 import r from "./Routine.module.css";
 
 type Horizon = FutureResult["horizons"][number];
+
+/** The model's "as you live now" readings for spots, wrinkle and texture; null unless all three were read. */
+function concernsOf(h: Horizon): Concerns | null {
+  const now = (key: string) => h.measured.find((m) => m.key === key)?.now;
+  const [spots, wrinkle, texture] = [now("spots"), now("wrinkle"), now("texture")];
+  return spots === undefined || wrinkle === undefined || texture === undefined ? null : { spots, wrinkle, texture };
+}
 
 const one = (n: number) => n.toFixed(1);
 const pct = (n: number) => Math.max(0, Math.min(100, n));
@@ -83,24 +91,68 @@ function Compare({ h, label, dose, citation, ref }: CompareProps) {
   );
 }
 
-/** The SPF face's Skin Simulation intensity as an annotated formula: 0.24 x (city UV / Nambour UV, rounded) = intensity. */
+/** 1 -> "1.0", 1.28 -> "1.28", 0.75 -> "0.75": a factor at its own precision, never "1". */
+const factorText = (n: number) => (Number.isInteger(n) ? n.toFixed(1) : String(n));
+const itaText = (ita: number) => `${ita.toFixed(1).replace("-", "−")}°`;
+
+/**
+ * The SPF face's Skin Simulation intensity: the inputs as tiles (both UV readings and the measured skin tone), then
+ * one line of arithmetic, 0.24 x (UV ratio x tone factor, rounded to the nearest 0.5) = intensity.
+ */
 function Dose({ dose, citation }: { dose: FutureResult["dose"]; citation: FutureResult["citation"] }) {
   const d = c.dose;
-  const trial = (dose.intensity / dose.ratio).toFixed(2); // 0.24: the ratio is what the city changes
+  const trial = (dose.intensity / dose.ratio).toFixed(2); // 0.24: the ratio is what the city and the tone change
   const [cityUv, refUv, ratio, intensity] = [dose.cityUv.toFixed(1), dose.referenceUv.toFixed(1), dose.ratio.toFixed(1), dose.intensity.toFixed(2)];
+  const uvRatio = factorText(dose.uvRatio);
+  const tone = dose.tone;
+  const factor = factorText(tone?.factor ?? 1);
+  const band = tone ? d.bands[tone.band] : d.notMeasured;
+  const ita = tone ? `ITA ${itaText(tone.ita)}` : null;
   const refLabel = `${dose.referenceCity}, ${d.trialSite}`;
+  const toneSr = tone ? `${d.sentenceTone} ${factor} for ${band} ${d.sentenceSkin}, ${ita}` : `${d.sentenceTone} ${factor}, ${band}`;
+  const cite = (href: string, label: string, title: string) => (
+    <a className={s.doseCite} href={href} target="_blank" rel="noreferrer" title={title}>
+      {label}
+      <span aria-hidden> ↗</span>
+    </a>
+  );
   return (
     <span className={s.dose} data-testid="dose">
       <span className={s.doseTop}>
         <span className={`${s.pill} ${s.pillAccent}`}>{d.api}</span>
         <span className={s.doseEyebrow}>{d.eyebrow}</span>
-        <a className={s.doseCite} href={`https://doi.org/${citation.doi}`} target="_blank" rel="noreferrer">
-          {d.cite}
-          <span aria-hidden> ↗</span>
-        </a>
       </span>
       <span className={s.srOnly} data-testid="dose-sentence">
-        {`${d.sentence} ${trial} × (UV ${cityUv} in ${dose.cityName} / UV ${refUv} in ${refLabel}, ${d.sentenceRounded} ${ratio}) = ${intensity}`}
+        {`${d.sentence} ${trial} × (UV ${cityUv} in ${dose.cityName} / UV ${refUv} in ${refLabel} = ${uvRatio}, × ${toneSr}, ${d.rounded}: ${ratio}) = ${intensity}`}
+      </span>
+      <span className={s.doseTiles} aria-hidden>
+        <span className={s.doseTile}>
+          <small>
+            {d.cityUv} {dose.cityName}
+          </small>
+          <b data-testid="dose-city-uv">{cityUv}</b>
+        </span>
+        <span className={s.doseTile}>
+          <small>
+            {d.refUv} {refLabel}
+          </small>
+          <b data-testid="dose-ref-uv">{refUv}</b>
+        </span>
+        <span className={`${s.doseTile} ${s.toneTile}`} data-testid="dose-tone">
+          <small>{d.tone}</small>
+          <span className={s.toneValue}>
+            {tone ? (
+              <span className={s.swatch} style={{ background: toneSwatch(tone.ita) }} data-testid="dose-tone-swatch" />
+            ) : (
+              <span className={`${s.swatch} ${s.swatchNone}`} />
+            )}
+            <b data-testid="dose-tone-factor">×{factor}</b>
+          </span>
+          <span className={s.toneMeta}>
+            <span data-testid="dose-tone-band">{band}</span>
+            {ita ? <span data-testid="dose-tone-ita">{ita}</span> : null}
+          </span>
+        </span>
       </span>
       <span className={s.formula} aria-hidden>
         <span className={s.group}>
@@ -109,22 +161,25 @@ function Dose({ dose, citation }: { dose: FutureResult["dose"]; citation: Future
             <small>{d.trial}</small>
           </span>
           <span className={s.op}>×</span>
-          <span className={s.frac}>
-            <b data-testid="dose-city-uv">{cityUv}</b>
-            <small>
-              {d.cityUv} {dose.cityName}
-            </small>
-            <b data-testid="dose-ref-uv">{refUv}</b>
-            <small>
-              {d.refUv} {refLabel}
-            </small>
+        </span>
+        <span className={s.group}>
+          <span className={s.paren}>(</span>
+          <span className={s.term}>
+            <b data-testid="dose-uv-ratio">{uvRatio}</b>
+            <small>{d.uvRatio}</small>
           </span>
+          <span className={s.op}>×</span>
+          <span className={s.term}>
+            <b data-testid="dose-factor">{factor}</b>
+            <small>{d.toneShort}</small>
+          </span>
+          <span className={s.paren}>)</span>
         </span>
         <span className={s.group}>
           <span className={s.op}>≈</span>
-          <span className={s.term}>
+          <span className={`${s.term} ${s.termRounded}`}>
             <b data-testid="dose-ratio">{ratio}</b>
-            <small>{d.rounded}</small>
+            <small data-testid="dose-rounded-label">{d.rounded}</small>
           </span>
           <span className={s.op}>=</span>
           <span className={`${s.term} ${s.termResult}`}>
@@ -132,6 +187,15 @@ function Dose({ dose, citation }: { dose: FutureResult["dose"]; citation: Future
             <small>{d.intensity}</small>
           </span>
         </span>
+      </span>
+      <span className={s.doseFoot}>
+        <span className={s.doseCites}>
+          <span className={s.doseSources}>{d.sources}</span>
+          {cite(`https://doi.org/${citation.doi}`, d.cite, citation.text)}
+          {cite(`https://doi.org/${TONE_CITATIONS.chardon.doi}`, d.citeTone, TONE_CITATIONS.chardon.text)}
+          {cite(`https://doi.org/${TONE_CITATIONS.kaidbey.doi}`, d.citeMelanin, TONE_CITATIONS.kaidbey.text)}
+        </span>
+        <span className={s.assumption}>{TONE_ASSUMPTION}</span>
       </span>
     </span>
   );
@@ -380,6 +444,8 @@ export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, 
   const missing = slots.filter((x) => !x.available);
   const noteId = `${uid}-hz-note`;
   const switcher = data.source === "demo" && faces?.length ? faces : null;
+  // the shown horizon's "as you live now" readings steer the routine's morning pick
+  const concerns = concernsOf(h);
 
   const openRoutine = () => {
     clicked.current = true;
@@ -489,7 +555,7 @@ export function Result({ data, faces = null, titleTag: Title = "h1", catalogue, 
       ) : null}
     </section>
     {routineOpen && data.uv ? (
-      <Routine id={routineId} uv={data.uv} headingRef={routineHead} catalogue={catalogue} prefer={product?.code} cart={cart} />
+      <Routine id={routineId} uv={data.uv} headingRef={routineHead} catalogue={catalogue} prefer={product?.code} concerns={concerns} cart={cart} />
     ) : null}
     </>
   );

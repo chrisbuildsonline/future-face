@@ -132,18 +132,19 @@ test("the dose formula shows both UV readings, where they come from, and the int
   const dose = page.getByTestId("dose");
   await dose.scrollIntoViewIfNeeded();
   await expect(dose).toBeVisible();
-  // the demo reads Nambour, the trial site, against itself: 0.24 x (7.8 / 7.8, rounded to 1.0) = 0.24
+  // the demo reads Nambour, the trial site, against itself: UV ratio 7.8 / 7.8 = 1.0, x the measured tone factor 0.5
+  // (face a, ITA -6.2, brown) = 0.5, already on a 0.5 step; 0.24 x 0.5 = 0.12
   await expect(dose.getByTestId("dose-trial")).toHaveText("0.24");
   await expect(dose.getByTestId("dose-city-uv")).toHaveText("7.8");
   await expect(dose.getByTestId("dose-ref-uv")).toHaveText("7.8");
-  await expect(dose.getByTestId("dose-ratio")).toHaveText("1.0");
-  await expect(dose.getByTestId("dose-intensity")).toHaveText("0.24");
+  await expect(dose.getByTestId("dose-ratio")).toHaveText("0.5");
+  await expect(dose.getByTestId("dose-intensity")).toHaveText("0.12");
   await expect(dose).toContainText("Nambour");
   await expect(dose).toContainText(copy.dose.trialSite);
   await expect(dose.getByRole("link", { name: /Hughes 2013/ })).toHaveAttribute("href", `https://doi.org/${CITATION.doi}`);
   // the whole formula reads as one sentence to a screen reader
   await expect(page.getByTestId("dose-sentence")).toHaveText(
-    /0\.24 × \(UV 7\.8 in Nambour \/ UV 7\.8 in Nambour, the trial site, rounded to 1\.0\) = 0\.24/,
+    /0\.24 × \(UV 7\.8 in Nambour \/ UV 7\.8 in Nambour, the trial site = 1\.0, × skin tone factor 0\.5 for brown skin, ITA −6\.2°, rounded to nearest 0\.5: 0\.5\) = 0\.12/,
   );
   expect(errors).toEqual([]);
 });
@@ -165,20 +166,20 @@ test("the horizon switch swaps both faces and the model readings", async ({ page
   const spf = page.getByTestId("face-spf");
   await expectLoaded(now);
 
-  // +30 is the default: frame 66 for target 64, the SPF render at 0.24 (Nambour's own UV), wrinkles 21.6 -> 51.7
+  // +30 is the default: frame 66 for target 64, the SPF render at 0.12 (Nambour's own UV x tone factor 0.5 = 0.5; 0.24 x 0.5), wrinkles 21.6 -> 36.6 (the recorded 0.12 analysis)
   await expect(now).toHaveAttribute("src", /now-30\.jpg/);
-  await expect(spf).toHaveAttribute("src", /spf-30-024\.jpg/);
+  await expect(spf).toHaveAttribute("src", /spf-30-012\.jpg/);
   await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("21.6");
-  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("51.7");
+  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("36.6");
   await expect(page.getByText(`${copy.frame.target} 64.`)).toBeVisible();
 
   const twenty = page.getByRole("button", { name: landing.visual.horizon[0] });
   await twenty.click();
   await expect(twenty).toHaveAttribute("aria-pressed", "true");
   await expect(now).toHaveAttribute("src", /now-20\.jpg/);
-  await expect(spf).toHaveAttribute("src", /spf-20-024\.jpg/);
+  await expect(spf).toHaveAttribute("src", /spf-20-012\.jpg/);
   await expect(page.getByTestId("measured-wrinkle-now")).toHaveText("44.9");
-  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("65.6");
+  await expect(page.getByTestId("measured-wrinkle-spf")).toHaveText("56.2");
   await expect(page.getByTestId("frame-age")).toHaveText(`${copy.frame.age} 55`);
   await expect(page.getByText(`${copy.frame.target} 54.`)).toBeVisible();
   await expectLoaded(now);
@@ -317,8 +318,10 @@ test.describe("upload on the landing", () => {
   test("two cities with different UV get different SPF renders of the same frame", async ({ page }) => {
     const errors = collectErrors(page);
     const cities = [
+      // face a's tone factor is 0.5. Oslo: 3.9 / 7.8 x 0.5 = 0.25, clamped up to 0.5, so 0.24 x 0.5 = 0.12.
+      // Cairo: 11.7 / 7.8 x 0.5 = 0.75, nearest 0.5 step is 1.0, so 0.24 x 1.0 = 0.24.
       { city: "Oslo", country: "Norway", uvMax: 3.9, ratio: "0.5", intensity: "0.12", file: /spf-30-012\.jpg/ },
-      { city: "Cairo", country: "Egypt", uvMax: 11.7, ratio: "1.5", intensity: "0.36", file: /spf-30-036\.jpg/ },
+      { city: "Cairo", country: "Egypt", uvMax: 11.7, ratio: "1.0", intensity: "0.24", file: /spf-30-024\.jpg/ },
     ];
     const seen: { now: string | null; spf: string | null; frame: string | null }[] = [];
     for (const c of cities) {
