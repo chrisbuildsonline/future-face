@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { toneOf, type SkinTone } from "./skin-tone";
 import type { SkinAnalysis } from "./youcam";
 
 // Reads the recorded demo set: no network, no key.
@@ -20,6 +21,8 @@ export type Demo = {
   frames: number[];
   horizons: Horizon[];
   settings: Record<string, number>;
+  /** Measured by scripts/tone.ts from input.jpg and stored in tone.json. */
+  tone: SkinTone;
 };
 
 export const DEMO_FACES = ["a", "b"] as const;
@@ -33,7 +36,9 @@ export const faceDir = (face: FaceId = "a") => {
 };
 
 export function loadDemo(face: FaceId = "a"): Demo {
-  return JSON.parse(readFileSync(path.join(faceDir(face), "result.json"), "utf8"));
+  const dir = faceDir(face);
+  const { ita } = JSON.parse(readFileSync(path.join(dir, "tone.json"), "utf8"));
+  return { ...JSON.parse(readFileSync(path.join(dir, "result.json"), "utf8")), tone: toneOf(ita) };
 }
 
 /** Absolute path of a recorded image; only input.jpg and images named in that face's result.json resolve. */

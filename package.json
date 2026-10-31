@@ -12,6 +12,7 @@
     "mediapipe": "bun scripts/mediapipe-assets.ts",
     "fixture:wide": "bun scripts/wide-selfie.ts",
     "record": "bun scripts/record.ts",
+    "tone": "bun scripts/tone.ts",
     "sweep": "bun scripts/sweep.ts",
     "record:uv": "bun scripts/record-uv.ts",
     "products": "bun scripts/fetch-products.ts",
