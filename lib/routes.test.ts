@@ -60,9 +60,12 @@ describe("GET /api/future", () => {
   test("?city= uses live uv, falls back to recorded on failure, 400 on bad city", async () => {
     const ok = await (await GET(new Request("http://x/api/future?city=Lisbon"))).json();
     expect(ok.uv.city).toBe("Lisbon");
+    expect(ok.dose).toMatchObject({ cityName: "Lisbon", cityUv: 4.4, ratio: 0.5, intensity: 0.12 }); // 4.4 / 7.8 = 0.56 -> 0.5
+    expect(ok.horizons[0].spf.image).toContain("-012");
     globalThis.fetch = (async () => new Response("no", { status: 500 })) as unknown as typeof fetch;
     const fb = await (await GET(new Request("http://x/api/future?city=Lisbon"))).json();
     expect(fb.uv.source).toBe("recorded");
+    expect(fb.dose.intensity).toBe(0.24);
     const bad = await GET(new Request("http://x/api/future?city=%3Cb%3E"));
     expect(bad.status).toBe(400);
   });
@@ -76,6 +79,7 @@ describe("POST /api/future", () => {
     expect(body.source).toBe("demo");
     expect(body.notice).toBe(errors.no_key);
     expect(body.uv.city).toBe("Lisbon");
+    expect(body.dose.intensity).toBe(0.12);
   });
 
   test("missing selfie -> 400 bad_format", async () => {
@@ -117,11 +121,13 @@ describe("POST /api/future", () => {
     expect(body.error.message).toContain("couldn't find that city");
   });
 
-  test("uv outage does not block the run", async () => {
+  test("uv outage does not block the run: the recorded reading is used for the dose and the uv", async () => {
     globalThis.fetch = (async () => new Response("no", { status: 500 })) as unknown as typeof fetch;
     const res = await post({ city: "Lisbon" });
     expect(res.status).toBe(200);
-    expect((await res.json()).uv).toBeNull();
+    const body = await res.json();
+    expect(body.uv.source).toBe("recorded");
+    expect(body.dose).toMatchObject({ cityName: "Nambour", ratio: 1, intensity: 0.24 });
   });
 
   test("live cap -> 429 without calling YouCam", async () => {

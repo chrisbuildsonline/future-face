@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { DOSE_STEPS } from "./evidence";
 import { demoImagePath, loadDemo } from "./fixtures";
 
 describe("recorded demo fixtures", () => {
@@ -12,9 +13,8 @@ describe("recorded demo fixtures", () => {
     for (const h of d.horizons) {
       expect(typeof h.resAge).toBe("number");
       expect(d.frames).toContain(h.resAge);
-      expect(d.frames).toContain(h.spfResAge);
-      expect(h.spfResAge).toBeLessThanOrEqual(h.resAge);
-      for (const arm of [h.now, h.spf]) {
+      expect(h.spf.map((e) => e.intensity)).toEqual(DOSE_STEPS);
+      for (const arm of [h.now, ...h.spf]) {
         for (const k of ["wrinkle", "age_spot", "texture"]) {
           expect(typeof arm.analysis.concerns[k].raw_score).toBe("number");
         }
@@ -24,7 +24,9 @@ describe("recorded demo fixtures", () => {
 
   test("every referenced image exists and is a JPEG", () => {
     const d = loadDemo();
-    const names = ["input.jpg", ...d.horizons.flatMap((h) => [h.now.image, h.spf.image])];
+    const names = ["input.jpg", ...d.horizons.flatMap((h) => [h.now.image, ...h.spf.map((e) => e.image)])];
+    expect(names).toHaveLength(1 + 2 * 6);
+    expect(new Set(names).size).toBe(names.length);
     for (const n of names) {
       const b = readFileSync(demoImagePath(n));
       expect([b[0], b[1], b[2]]).toEqual([0xff, 0xd8, 0xff]);

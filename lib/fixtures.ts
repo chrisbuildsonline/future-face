@@ -9,10 +9,9 @@ export type Horizon = {
   years: 20 | 30;
   targetAge: number;
   resAge: number;
-  spfResAge: number;
-  sameFrame?: true;
   now: Arm;
-  spf: Arm;
+  /** One render per DOSE_STEPS value: the "now" frame through Skin Simulation at that intensity. */
+  spf: (Arm & { intensity: number })[];
 };
 export type Demo = {
   recordedAt: string;
@@ -31,7 +30,7 @@ export function loadDemo(): Demo {
 
 /** Absolute path of a recorded image; only input.jpg and images named in result.json resolve. */
 export function demoImagePath(name: string): string {
-  const allowed = ["input.jpg", ...loadDemo().horizons.flatMap((h) => [h.now.image, h.spf.image])];
+  const allowed = ["input.jpg", ...loadDemo().horizons.flatMap((h) => [h.now.image, ...h.spf.map((e) => e.image)])];
   if (!allowed.includes(name)) throw new Error("unknown demo image");
   return path.join(dir(), name);
 }

@@ -1,6 +1,5 @@
 {
   "inputHash": "748197693e80bfccd5288821fa7c0038b174d6f9",
-  "spfAgingReduction": 0.24,
   "inputAge": 34,
   "frames": [
     12,
@@ -23,13 +22,11 @@
   "picked": [
     {
       "years": 20,
-      "nowResAge": 55,
-      "spfResAge": 51
+      "resAge": 55
     },
     {
       "years": 30,
-      "nowResAge": 66,
-      "spfResAge": 58
+      "resAge": 66
     }
   ]
 }

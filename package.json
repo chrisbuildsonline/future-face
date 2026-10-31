@@ -7,7 +7,7 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "test": "bun test lib",
+    "test": "bun test ./lib",
     "postinstall": "bun scripts/mediapipe-assets.ts",
     "mediapipe": "bun scripts/mediapipe-assets.ts",
     "fixture:wide": "bun scripts/wide-selfie.ts",

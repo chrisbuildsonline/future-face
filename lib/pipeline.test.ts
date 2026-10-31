@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import sharp from "sharp";
+import { spfDose } from "./evidence";
 import { demoImagePath, loadDemo } from "./fixtures";
 import { CROP_LADDER, demoResult, measuredLine, runLive } from "./pipeline";
+import { recordedUv } from "./uv";
 import { YoucamError, type SkinAnalysis } from "./youcam";
 
 const an = (c: Record<string, number>, skinAge?: number): SkinAnalysis => ({
@@ -12,13 +14,14 @@ const an = (c: Record<string, number>, skinAge?: number): SkinAnalysis => ({
 describe("measuredLine", () => {
   test("recorded +30 numbers", () => {
     const d = loadDemo().horizons[1];
-    const line = measuredLine(d.now.analysis, d.spf.analysis);
+    const spf = d.spf.find((e) => e.intensity === 0.24)!;
+    const line = measuredLine(d.now.analysis, spf.analysis);
     expect(line.map((l) => l.key)).toEqual(["spots", "wrinkle", "texture"]);
     const w = line.find((l) => l.key === "wrinkle")!;
     const r1 = (n: number) => Math.round(n * 10) / 10;
     expect(w.analysisKey).toBe("wrinkle");
     expect(w.now).toBe(r1(d.now.analysis.concerns.wrinkle.raw_score));
-    expect(w.spf).toBe(r1(d.spf.analysis.concerns.wrinkle.raw_score));
+    expect(w.spf).toBe(r1(spf.analysis.concerns.wrinkle.raw_score));
     expect(w.delta).toBe(r1(w.spf - w.now));
   });
   test("skips a concern missing from either side", () => {
@@ -40,22 +43,45 @@ describe("demoResult", () => {
         expect(url.startsWith("/api/demo-image/")).toBe(true);
         expect(() => demoImagePath(url.slice("/api/demo-image/".length))).not.toThrow();
       }
-      expect(typeof h.spfResAge).toBe("number");
-      if (h.sameFrame) expect(h.measured).toEqual([]);
-      else {
-        expect(h.spfResAge).toBeLessThan(h.resAge);
-        expect(h.measured.length).toBeGreaterThan(0);
-      }
+      expect(h).not.toHaveProperty("spfResAge");
+      expect(h).not.toHaveProperty("sameFrame");
+      expect(h.measured.length).toBeGreaterThan(0);
     }
     expect(r.horizons.map((h) => h.years)).toEqual([20, 30]);
   });
-  test("uses a caller-supplied uv", () => {
-    expect(demoResult(null).uv).toBeNull();
+  test("uses a caller-supplied uv; a null uv keeps null but doses from the recorded reading", () => {
+    const r = demoResult(null);
+    expect(r.uv).toBeNull();
+    expect(r.dose.intensity).toBe(0.24);
+  });
+  test("the recorded Nambour uv gives the 0.24 entry, dose and settings", () => {
+    const r = demoResult(recordedUv());
+    const d = loadDemo();
+    expect(r.dose).toEqual(spfDose(recordedUv()));
+    expect(r.settings).toEqual({ spots: 0.24, wrinkle: 0.24, texture: 0.24 });
+    r.horizons.forEach((h, i) => {
+      expect(h.spf.image).toBe(`/api/demo-image/${d.horizons[i].spf.find((e) => e.intensity === 0.24)!.image}`);
+    });
+  });
+  test("uvs that map to different steps give different spf images and settings", () => {
+    const uv = (uvMax: number) => ({ ...recordedUv(), uvMax });
+    const low = demoResult(uv(3.9));
+    const high = demoResult(uv(15.6));
+    expect(low.dose.intensity).toBe(0.12);
+    expect(high.dose.intensity).toBe(0.48);
+    expect(high.settings).toEqual({ spots: 0.48, wrinkle: 0.48, texture: 0.48 });
+    low.horizons.forEach((h, i) => {
+      expect(h.spf.image).not.toBe(high.horizons[i].spf.image);
+      expect(h.now.image).toBe(high.horizons[i].now.image);
+    });
+  });
+  test("every step image is servable", () => {
+    for (const h of loadDemo().horizons) for (const e of h.spf) expect(() => demoImagePath(e.image)).not.toThrow();
   });
 });
 
 describe("runLive", () => {
-  // input 30: +20 -> now 50 / spf nearest 45.2 = 45; +30 -> now 60 / spf nearest 52.8 = 55
+  // input 30: +20 -> frame 50; +30 -> frame 60, for both arms
   const frames = [30, 35, 40, 45, 50, 55, 60].map((resAge) => ({ resAge, url: `u${resAge}` }));
   const mk = async (w = 1020, h = 1020) =>
     sharp({ create: { width: w, height: h, channels: 3, background: "#888" } }).jpeg().toBuffer();
@@ -86,11 +112,17 @@ describe("runLive", () => {
     expect(r.source).toBe("live");
     expect(r.inputAge).toBe(30);
     expect(r.frames).toEqual([30, 35, 40, 45, 50, 55, 60]);
-    expect(log.downloads.sort()).toEqual(["u45", "u50", "u55", "u60"]);
-    expect(r.horizons.map((h) => [h.years, h.targetAge, h.resAge, h.spfResAge, h.sameFrame])).toEqual([
-      [20, 50, 50, 45, undefined],
-      [30, 60, 60, 55, undefined],
+    expect(log.downloads.sort()).toEqual(["u50", "u60"]); // one download per horizon, shared by both arms
+    expect(r.horizons.map((h) => [h.years, h.targetAge, h.resAge])).toEqual([
+      [20, 50, 50],
+      [30, 60, 60],
     ]);
+    for (const h of r.horizons) {
+      expect(h).not.toHaveProperty("spfResAge");
+      expect(h).not.toHaveProperty("sameFrame");
+    }
+    expect(r.dose).toEqual(spfDose(null));
+    expect(r.settings).toEqual({ spots: 0.24, wrinkle: 0.24, texture: 0.24 });
     for (const h of r.horizons) {
       expect(h.spf.image.startsWith("data:image/jpeg;base64,")).toBe(true);
       const bytes = Buffer.from(h.spf.image.split(",")[1], "base64");
@@ -103,37 +135,36 @@ describe("runLive", () => {
     expect(r.input?.startsWith("data:image/jpeg;base64,")).toBe(true);
   });
 
-  test("the SPF arm is a different, younger frame and simulation runs on it", async () => {
-    const sizes: Record<string, number> = { u45: 900, u50: 1000, u55: 1100, u60: 1200 }; // distinct size per frame
+  test("both arms share the frame: the SPF arm is that frame through Skin Simulation at the dose", async () => {
+    const sizes: Record<string, number> = { u50: 1000, u60: 1200 }; // distinct size per frame
     const simulated: string[] = [];
+    const analysed: number[] = [];
+    const settings: unknown[] = [];
     const { d, log } = deps({
       downloadFrame: async (url: string) => {
         log.downloads.push(url);
         return mk(sizes[url], sizes[url]);
       },
-      simulateSkin: async (bytes: Uint8Array) => {
+      simulateSkin: async (bytes: Uint8Array, s: unknown) => {
         const w = (await sharp(bytes).metadata()).width!;
         simulated.push(Object.keys(sizes).find((u) => sizes[u] === w)!);
+        settings.push(s);
         return png();
       },
+      analyzeSkin: async (b: Uint8Array) => {
+        analysed.push((await sharp(b).metadata()).width!);
+        return an({ wrinkle: 70, age_spot: 80, texture: 90 }, 40);
+      },
     });
-    const r = await runLive(await mk(800, 800), d);
-    expect(log.downloads.sort()).toEqual(["u45", "u50", "u55", "u60"]);
-    expect(simulated.sort()).toEqual(["u45", "u55"]); // only the SPF frames, never the now frames
-    expect(r.horizons.every((h) => h.spfResAge < h.resAge)).toBe(true);
-  });
-
-  test("same frame for both arms: sameFrame true, measured [], simulation still runs", async () => {
-    const two = [30, 50].map((resAge) => ({ resAge, url: `u${resAge}` }));
-    const { d, log } = deps({ ageFace: async () => ({ inputAge: 30, frames: two }) });
-    const r = await runLive(await mk(800, 800), d);
-    for (const h of r.horizons) {
-      expect(h.sameFrame).toBe(true);
-      expect(h.measured).toEqual([]);
-      expect(h.resAge).toBe(50);
-      expect(h.spfResAge).toBe(50);
-    }
-    expect(log.sim).toBe(2);
+    const dose = spfDose({ ...recordedUv(), uvMax: 11.7 });
+    const r = await runLive(await mk(800, 800), d, {}, dose);
+    expect(log.downloads.sort()).toEqual(["u50", "u60"]);
+    expect(simulated.sort()).toEqual(["u50", "u60"]); // simulation runs on the same frames the now arm shows
+    expect(settings).toEqual(Array(2).fill({ spots: 0.36, wrinkle: 0.36, texture: 0.36 }));
+    expect(r.dose).toBe(dose);
+    expect(r.settings).toEqual({ spots: 0.36, wrinkle: 0.36, texture: 0.36 });
+    expect(r.horizons.map((h) => h.resAge)).toEqual([50, 60]);
+    expect(analysed).toHaveLength(4); // now + spf per horizon
   });
 
   const settle = () => new Promise((r) => setTimeout(r, 100));

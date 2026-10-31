@@ -1,4 +1,5 @@
 import { cityErrors, errors } from "@/lib/copy";
+import { spfDose } from "@/lib/evidence";
 import { demoResult, runLive } from "@/lib/pipeline";
 import { cleanCity, getUv, recordedUv, UvError, type Uv } from "@/lib/uv";
 import { hasYoucamKey, YoucamError, type ErrorKind } from "@/lib/youcam";
@@ -38,11 +39,12 @@ export async function POST(req: Request) {
   const city = cleanCity(form.get("city"));
   if (!city) return cityFail();
 
-  let uv: Uv | null = null;
+  let uv: Uv;
   try {
     uv = await getUv(city);
   } catch (e) {
     if (e instanceof UvError && e.kind === "city_not_found") return cityFail();
+    uv = recordedUv(); // uv_unavailable: dose and uv both fall back to the recorded reading
   }
 
   if (!hasYoucamKey()) return Response.json({ ...demoResult(uv), notice: errors.no_key });
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
   if (liveRuns >= Number(process.env.LIVE_RUNS_MAX ?? 5)) return fail(429, "rate_limited");
   liveRuns++;
   try {
-    const result = await runLive(new Uint8Array(await selfie.arrayBuffer()));
+    const result = await runLive(new Uint8Array(await selfie.arrayBuffer()), undefined, undefined, spfDose(uv));
     return Response.json({ ...result, uv });
   } catch (e) {
     if (!(e instanceof YoucamError)) return fail(500, "unknown");

@@ -1,13 +1,13 @@
 // Usage: bun run sweep -- <image> [more images]
 // One AI Aging call per face (~2 units, cached under .sweep/ so a rerun costs 0), then for every frame:
 // mean absolute pixel difference vs the frame nearest the input age, and Laplacian variance (texture).
-// The key number is the pixel gap between the "now" frame and the SPF frame per lib/pipeline.ts pickArmFrames.
+// Both arms use the frame nearest inputAge + years (pickNearest); the SPF arm differs only by Skin Simulation.
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
 import { prepareForAging } from "../lib/image";
-import { HORIZONS, pickArmFrames } from "../lib/pipeline";
-import { ageFace, downloadFrame, hasYoucamKey, YoucamError } from "../lib/youcam";
+import { HORIZONS } from "../lib/pipeline";
+import { ageFace, downloadFrame, hasYoucamKey, pickNearest, YoucamError } from "../lib/youcam";
 
 const paths = process.argv.slice(2).filter((a) => a !== "--");
 if (!paths.length) {
@@ -80,10 +80,8 @@ async function main() {
     }
     const list = frames.map((resAge) => ({ resAge, url: "" }));
     for (const years of HORIZONS) {
-      const { now, spf } = pickArmFrames(list, inputAge, years);
-      if (!now || !spf) continue;
-      const d = now.resAge === spf.resAge ? 0 : mad(grays.get(now.resAge)!, grays.get(spf.resAge)!);
-      console.log(`KEY +${years}: now res_age=${now.resAge} vs spf res_age=${spf.resAge}: mean pixel diff ${d.toFixed(2)}${now.resAge === spf.resAge ? " (same frame)" : ""}`);
+      const frame = pickNearest(list, inputAge, years);
+      if (frame) console.log(`+${years}: both arms use res_age=${frame.resAge}, mean pixel diff vs ref ${mad(grays.get(frame.resAge)!, grays.get(ref)!).toFixed(2)}`);
     }
   }
 }
