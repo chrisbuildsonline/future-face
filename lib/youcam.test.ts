@@ -106,6 +106,7 @@ function buildZip(entries: Record<string, Buffer>, stored?: Record<string, Buffe
 beforeEach(() => {
   process.env.YOUCAM_SECRET_KEY = "test-key";
   delete process.env.YOUCAM_API_URL;
+  delete process.env.YOUCAM_API_KEY;
 });
 
 describe("env", () => {
@@ -119,6 +120,20 @@ describe("env", () => {
     expect(youcamBaseUrl()).toBe("https://example.test");
     process.env.YOUCAM_API_URL = "http://localhost:9000";
     expect(youcamBaseUrl()).toBe("http://localhost:9000");
+  });
+
+  test("YOUCAM_API_KEY works as another name; YOUCAM_SECRET_KEY wins when both are set", async () => {
+    const auth = async () => {
+      const { f, calls } = mockFetch(() => json({}));
+      await analyzeSkin(await jpg(600, 800), { fetch: f, ...fast }).catch(() => {});
+      return calls[0]?.headers.Authorization;
+    };
+    process.env.YOUCAM_SECRET_KEY = "";
+    process.env.YOUCAM_API_KEY = "alt-key";
+    expect(hasYoucamKey()).toBe(true);
+    expect(await auth()).toBe("Bearer alt-key");
+    process.env.YOUCAM_SECRET_KEY = "test-key";
+    expect(await auth()).toBe("Bearer test-key");
   });
 
   test("hasYoucamKey and no_key error", async () => {

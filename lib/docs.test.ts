@@ -42,7 +42,7 @@ describe("README env vars", () => {
   const vars = envVarsRead();
 
   test("the scan finds the known env vars", () => {
-    for (const v of ["YOUCAM_SECRET_KEY", "YOUCAM_API_URL", "LIVE_RUNS_MAX"])
+    for (const v of ["YOUCAM_SECRET_KEY", "YOUCAM_API_KEY", "YOUCAM_API_URL", "LIVE_RUNS_MAX"])
       expect(vars).toContain(v);
   });
 

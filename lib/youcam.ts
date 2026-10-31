@@ -1,6 +1,6 @@
 import { inflateRawSync } from "node:zlib";
 
-// Server-side only: reads YOUCAM_SECRET_KEY.
+// Server-side only: reads YOUCAM_SECRET_KEY (or YOUCAM_API_KEY).
 
 const DEFAULT_HOST = "https://yce-api-01.makeupar.com";
 
@@ -94,12 +94,15 @@ export function youcamBaseUrl(): string {
   return DEFAULT_HOST;
 }
 
-export const hasYoucamKey = () => !!process.env.YOUCAM_SECRET_KEY;
+// YOUCAM_API_KEY is accepted as another name for YOUCAM_SECRET_KEY, which wins when both are set.
+const youcamKey = () => process.env.YOUCAM_SECRET_KEY || process.env.YOUCAM_API_KEY;
+
+export const hasYoucamKey = () => !!youcamKey();
 
 type Json = any;
 
 async function call(path: string, method: "GET" | "POST", body: unknown, opts: Opts): Promise<Json> {
-  const key = process.env.YOUCAM_SECRET_KEY;
+  const key = youcamKey();
   if (!key) throw new YoucamError("no_key", "no_key");
   const f = opts.fetch ?? fetch;
   let res: Response;
