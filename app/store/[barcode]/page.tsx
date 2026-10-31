@@ -6,6 +6,7 @@ import { shelfOf } from "@/lib/shelves";
 import { ProductImage } from "../../components/Routine";
 import { AddToBag } from "../Bag";
 import { Crumbs, KIND, ShopFooter, ShopHeader } from "../Shop";
+import { Snippet } from "../Snippet";
 import s from "../store.module.css";
 
 // A preview of a made-up shop, "Sunday Pharmacy", with the Future Face widget embedded the way a store would.
@@ -26,7 +27,6 @@ export default async function StorePage({ params }: Props) {
   const p = findProduct((await params).barcode);
   if (!p) notFound();
   const shelf = shelfOf(p.kind);
-  const snippet = `<script src="http://localhost:3000/widget.js" defer></script>\n<div data-future-face data-product="${p.code}"${p.spf ? ` data-spf="${p.spf}"` : ""}></div>`;
 
   return (
     <div className={s.shop}>
@@ -92,7 +92,7 @@ export default async function StorePage({ params }: Props) {
             </p>
           </div>
           <pre className={s.code}>
-            <code>{snippet}</code>
+            <Snippet code={p.code} spf={p.spf} />
           </pre>
         </aside>
       </main>

@@ -82,7 +82,9 @@ for (const [name, viewport] of [
       await page.getByText("Ingredients", { exact: true }).click();
       await expect(page.getByText(product.ingredients.slice(0, 30), { exact: false })).toBeVisible();
       await page.getByText("Ingredients", { exact: true }).click();
-      await expect(page.locator("pre code")).toContainText('<script src="http://localhost:3000/widget.js" defer></script>');
+      // the snippet points at the origin this page is served from, never a hard-coded localhost:3000
+      const origin = new URL(page.url()).origin;
+      await expect(page.locator("pre code")).toContainText(`<script src="${origin}/widget.js" defer></script>`);
       const pill = pillOf(page);
       await expect(pill).toBeVisible();
       if (name === "phone") {
