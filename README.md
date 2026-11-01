@@ -8,7 +8,7 @@ On the demo face in 30 years (frame age 66 for both faces, with daily SPF at Nam
 
 ![The result screen: the demo face in 30 years, one aging frame (66) for both sides, with a drag divider between "As you live now" and "With daily SPF", the SPF dose formula 0.24 × (UV 7.8 in Nambour / UV 7.8 in Nambour, the trial site) = 0.24 under it, the model reading from AI Skin Analysis, a close-up and the UV card](docs/screenshots/result-desktop.png)
 
-Built for the [YouCam API Skin AI & eCommerce VTO Hackathon](https://youcam-api-skin-ai-ecommerce.devpost.com/). Demo script: [docs/DEMO.md](docs/DEMO.md).
+Built for the [YouCam API Skin AI & eCommerce VTO Hackathon](https://youcam-api-skin-ai-ecommerce.devpost.com/). Demo script: [docs/DEMO.md](docs/DEMO.md). Demo video: [docs/demo.mp4](docs/demo.mp4) (`bun run demo:video`). Devpost draft: [docs/DEVPOST.md](docs/DEVPOST.md).
 
 ## Try it
 
@@ -103,6 +103,7 @@ LIVE_RUNS_MAX=5
 | `bun run record` | Re-records [fixtures/demo/](fixtures/demo/) with one live run on the source face. Needs `YOUCAM_SECRET_KEY`; costs about 46 units (reuses a recorded aging step if present). `bun run record -- --face b --src <image>` records the second demo face from scratch into [fixtures/demo-b/](fixtures/demo-b/) (about 150 units, resumable via `partial.json`; only +20 is recorded so far, and `bun run record -- --face b --finalize` rebuilds `result.json` from `partial.json` with no API call, keeping only fully recorded horizons). The source faces live in `fixtures/source/`, which is git-ignored. |
 | `bun run products` | Refetches the sunscreens and cleansers from Open Beauty Facts into [fixtures/products.json](fixtures/products.json) and `public/products/` (free, no key) |
 | `bun run record:uv` | Re-records today's Nambour UV reading into `fixtures/demo/uv.json` |
+| `bun run demo:video` | Renders [docs/demo.mp4](docs/demo.mp4): American voice clone, white cards, `FF_CATALOGUE=generic`, store widget + city chips. Needs the voice-clone venv, ffmpeg and Playwright chromium. |
 
 ## Run it in Docker
 
