@@ -40,4 +40,6 @@ Then it sizes a three-step SPF routine from real Open Beauty Facts products (or 
 
 ## Demo video
 
-Local file: `docs/demo.mp4` (1080p, ~1:44, American voice clone, generic catalogue). Upload publicly to YouTube/Vimeo and paste the link here and on the form.
+Public demo: https://youtu.be/apt0nKwRU-g
+
+Local file: `docs/demo.mp4` (1080p, ~1:44, American voice clone, generic catalogue).
